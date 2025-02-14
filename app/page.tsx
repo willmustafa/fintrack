@@ -6,10 +6,12 @@ import { button as buttonStyles } from "@heroui/theme";
 import { siteConfig } from "@/config/site";
 import { title, subtitle } from "@/components/primitives";
 import { GithubIcon } from "@/components/icons";
+import { Button } from "@heroui/button";
+import HomeHeader from "@/components/home-header";
 
 export default function Home() {
   return (
-      <div></div>
+    <HomeHeader />
     // <section>
     //     <nav className="navbar fixed-top">
     //         <div className="container sm:px-4 lg:px-8 flex flex-wrap items-center justify-between lg:flex-nowrap">

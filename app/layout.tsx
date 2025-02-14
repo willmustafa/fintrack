@@ -51,11 +51,12 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="https://heroui.com?utm_source=next-app-template"
-                title="heroui.com homepage"
+                href="https://willmustafa.github.io/"
+                title="Willian Mustafa page"
               >
-                <span className="text-default-600">Powered by</span>
-                <p className="text-primary">HeroUI</p>
+                <span className="text-default-600">
+                  Criado por Willian Mustafa
+                </span>
               </Link>
             </footer>
           </div>

@@ -43,10 +43,7 @@ export default function RootLayout({
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
-              {children}
-            </main>
+            <main>{children}</main>
             <footer className="w-full flex items-center justify-center py-3">
               <Link
                 isExternal
@@ -55,7 +52,8 @@ export default function RootLayout({
                 title="Willian Mustafa page"
               >
                 <span className="text-default-600">
-                  Criado por Willian Mustafa
+                  Criado por Willian Mustafa - Acesse meu Github e me pague um
+                  café!
                 </span>
               </Link>
             </footer>

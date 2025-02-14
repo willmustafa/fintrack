@@ -1,110 +1,19 @@
-import { Link } from "@heroui/link";
-import { Snippet } from "@heroui/snippet";
-import { Code } from "@heroui/code";
-import { button as buttonStyles } from "@heroui/theme";
-
-import { siteConfig } from "@/config/site";
-import { title, subtitle } from "@/components/primitives";
-import { GithubIcon } from "@/components/icons";
-import { Button } from "@heroui/button";
 import HomeHeader from "@/components/home-header";
+import HowItWorks from "@/components/how-it-works";
+import Features from "@/components/features";
+import { Navbar } from "@/components/navbar";
+
 export default function Home() {
   return (
-    <>
-      <HomeHeader />
-      <HowItWorks />
-    </>
+    <div>
+      <Navbar />
+      <div className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
+        <HomeHeader />
+        <HowItWorks />
+        <Features />
+      </div>
+    </div>
 
-    // <section>
-    //
-    //
-    //     <div id="features" className="cards-1">
-    //         <div className="container px-4 sm:px-8 xl:px-4">
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-1.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Platform Integration</h5>
-    //                     <p className="mb-4">You sales force can use the app on any smartphone platform without compatibility issues</p>
-    //                 </div>
-    //             </div>
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-2.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Easy On Resources</h5>
-    //                     <p className="mb-4">Works smoothly even on older generation hardware due to our optimization efforts</p>
-    //                 </div>
-    //             </div>
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-3.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Great Performance</h5>
-    //                     <p className="mb-4">Optimized code and innovative technology insure no delays and ultra-fast responsiveness</p>
-    //                 </div>
-    //             </div>
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-4.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Multiple Languages</h5>
-    //                     <p className="mb-4">Choose from one of the 40 languages that come pre-installed and start selling smarter</p>
-    //                 </div>
-    //             </div>
-    //
-    //
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-5.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Free Updates</h5>
-    //                     <p className="mb-4">Don't worry about future costs, pay once and receive all future updates at no extra cost</p>
-    //                 </div>
-    //             </div>
-    //
-    //
-    //
-    //             <div className="card">
-    //                 <div className="card-image">
-    //                     <img src="images/features-icon-6.svg" alt="alternative" />
-    //                 </div>
-    //                 <div className="card-body">
-    //                     <h5 className="card-title">Community Support</h5>
-    //                     <p className="mb-4">Register the app and get acces to knowledge and ideas from the Pavo online community</p>
-    //                 </div>
-    //             </div>
-    //
-    //
-    //         </div>
-    //     </div>
-    //
-    //     <div id="details" className="pt-12 pb-16 lg:pt-16">
-    //         <div className="container px-4 sm:px-8 lg:grid lg:grid-cols-12 lg:gap-x-12">
-    //             <div className="lg:col-span-5">
-    //                 <div className="mb-16 lg:mb-0 xl:mt-16">
-    //                     <h2 className="mb-6">Results driven ground breaking technology</h2>
-    //                     <p className="mb-4">Based on our team's extensive experience in developing line of business applications and constructive customer feedback we reached a new level of revenue.</p>
-    //                     <p className="mb-4">We enjoy helping small and medium sized tech businesses take a shot at established Fortune 500 companies</p>
-    //                 </div>
-    //             </div>
-    //             <div className="lg:col-span-7">
-    //                 <div className="xl:ml-14">
-    //                     <img className="inline" src="images/details-1.jpg" alt="alternative" />
-    //                 </div>
-    //             </div>
-    //         </div>
-    //     </div>
     //
     //     <div className="py-24">
     //         <div className="container px-4 sm:px-8 lg:grid lg:grid-cols-12 lg:gap-x-12">
@@ -471,5 +380,3 @@ export default function Home() {
     // </section>
   );
 }
-
-import HowItWorks from "@/components/how-it-works";

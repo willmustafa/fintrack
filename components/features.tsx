@@ -1,6 +1,6 @@
 export default function Features() {
   return (
-    <div className="text-center pt-12 pb-16 lg:pt-16">
+    <div className="text-center pt-12 pb-16 lg:pt-16" id="recursos">
       <h4 className="text-xl font-bold mb-4">
         <span className="text-red-500">#</span> Recursos?
       </h4>
@@ -11,16 +11,15 @@ export default function Features() {
         <div className="lg:col-span-5">
           <div className="mb-16 lg:mb-0 xl:mt-16">
             <h2 className="text-3xl font-bold mb-6">
-              Results driven ground breaking technology
+              Lorem ipsum dolor sit amet
             </h2>
             <p className="mb-4">
-              Based on our team's extensive experience in developing line of
-              business applications and constructive customer feedback we
-              reached a new level of revenue.
+              Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum
+              dolor sit amet Lorem ipsum dolor sit amet
             </p>
             <p className="mb-4">
-              We enjoy helping small and medium sized tech businesses take a
-              shot at established Fortune 500 companies
+              Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum
+              dolor sit amet
             </p>
           </div>
         </div>
@@ -47,31 +46,19 @@ export default function Features() {
         <div className="lg:col-span-5 text-start">
           <div className="xl:mt-12">
             <h2 className="text-3xl font-bold mb-6">
-              Instant results for the marketing department
+              Lorem ipsum dolor sit amet
             </h2>
             <ul className="list mb-7 space-y-2">
               <li className="flex">
-                <i className="fas fa-chevron-right"></i>
-                <div>Features that will help you and your marketers</div>
+                <div>Lorem ipsum dolor sit amet</div>
               </li>
               <li className="flex">
-                <i className="fas fa-chevron-right"></i>
-                <div>Smooth learning curve due to the knowledge base</div>
+                <div>Lorem ipsum dolor sit amet</div>
               </li>
               <li className="flex">
-                <i className="fas fa-chevron-right"></i>
-                <div>Ready out-of-the-box with minor setup settings</div>
+                <div>Lorem ipsum dolor sit amet</div>
               </li>
             </ul>
-            <a
-              className="btn-solid-reg popup-with-move-anim mr-1.5"
-              href="#details-lightbox"
-            >
-              Lightbox
-            </a>
-            <a className="btn-outline-reg" href="article.html">
-              Details
-            </a>
           </div>
         </div>
       </div>

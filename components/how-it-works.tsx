@@ -2,7 +2,7 @@ import HowItWorksCard from "@/components/how-it-works-card";
 
 export default function HowItWorks() {
   return (
-    <section className="text-center py-20">
+    <section className="text-center py-20" id="como-funciona">
       <h4 className="text-xl font-bold mb-4">
         <span className="text-red-500">#</span> Como funciona?
       </h4>

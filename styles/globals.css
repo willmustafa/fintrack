@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+    scroll-behavior: smooth;
+}
+
 .h1-large {
     font-size: 2.875rem;
     line-height: 3.5rem;

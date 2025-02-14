@@ -14,6 +14,7 @@ import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import Image from "next/image";
+import { Button } from "@heroui/button";
 
 export const Navbar = () => {
   return (
@@ -27,21 +28,48 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent className="basis-1/5 sm:basis-full" justify="end">
-        <ul className="hidden lg:flex gap-4 justify-end ml-2">
-          {siteConfig.navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink
-                className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
-                )}
-                color="foreground"
-                href={item.href}
-              >
-                {item.label}
-              </NextLink>
-            </NavbarItem>
-          ))}
+        <ul className="hidden lg:flex gap-4 justify-end ml-2 items-center">
+          <NavbarItem>
+            <NextLink
+              className={clsx(
+                linkStyles({ color: "foreground" }),
+                "data-[active=true]:text-primary data-[active=true]:font-medium",
+              )}
+              color="foreground"
+              href="#home"
+            >
+              Home
+            </NextLink>
+          </NavbarItem>
+          <NavbarItem>
+            <NextLink
+              className={clsx(
+                linkStyles({ color: "foreground" }),
+                "data-[active=true]:text-primary data-[active=true]:font-medium",
+              )}
+              color="foreground"
+              href="#como-funciona"
+            >
+              Como Funciona
+            </NextLink>
+          </NavbarItem>
+          <NavbarItem>
+            <NextLink
+              className={clsx(
+                linkStyles({ color: "foreground" }),
+                "data-[active=true]:text-primary data-[active=true]:font-medium",
+              )}
+              color="foreground"
+              href="#recursos"
+            >
+              Recursos
+            </NextLink>
+          </NavbarItem>
+          <NextLink href="dashboard">
+            <Button color="success" className="text-white font-semibold">
+              Comece já
+            </Button>
+          </NextLink>
         </ul>
       </NavbarContent>
 

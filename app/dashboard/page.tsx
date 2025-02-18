@@ -1,9 +1,9 @@
-import { title } from "@/components/primitives";
+import CompactCard from "@/components/CompactCard";
 
 export default function PricingPage() {
   return (
     <div>
-      <h1 className={title()}>Pricing</h1>
+      <CompactCard />
     </div>
   );
 }

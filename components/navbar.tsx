@@ -12,11 +12,16 @@ import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
 
-import { siteConfig } from "@/config/site";
 import Image from "next/image";
 import { Button } from "@heroui/button";
 
 export const Navbar = () => {
+  const links = [
+    { label: "Home", path: "#" },
+    { label: "Como Funciona", path: "#como-funciona" },
+    { label: "Recursos", path: "#recursos" },
+  ];
+
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
@@ -79,19 +84,9 @@ export const Navbar = () => {
 
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {siteConfig.navItems.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navMenuItems.length - 1
-                      ? "danger"
-                      : "foreground"
-                }
-                href="#"
-                size="lg"
-              >
+          {links.map((item, index) => (
+            <NavbarMenuItem key={`${item.path}-${index}`}>
+              <Link color="primary" href={item.path} size="lg">
                 {item.label}
               </Link>
             </NavbarMenuItem>

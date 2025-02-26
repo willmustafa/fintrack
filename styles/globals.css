@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --dark-blue: #201E31;
+}
+
 html {
     scroll-behavior: smooth;
 }

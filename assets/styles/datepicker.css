@@ -22,7 +22,6 @@
     justify-content: center;
     align-items: flex-start;
     flex-direction: column;
-    height: 3.5rem;
     background-color: hsl(240, 3.7%, 15.9%)
 }
 
@@ -549,6 +548,11 @@ h2.react-datepicker__current-month {
     position: relative;
     display: inline-block;
     width: 100%;
+}
+.react-datepicker__input-container input {
+    background: transparent;
+    color: white;
+    text-align: center;
 }
 .react-datepicker__input-container .react-datepicker__calendar-icon {
     position: absolute;

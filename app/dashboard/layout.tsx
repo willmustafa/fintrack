@@ -7,7 +7,7 @@ import clsx from "clsx";
 import DatePicker from "react-datepicker";
 import "@/assets/styles/datepicker.css";
 
-export default function PricingLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -35,7 +35,7 @@ export default function PricingLayout({
               onChange={(date) =>
                 setSelectedDate(new Date(date?.toString() ?? ""))
               }
-              dateFormat="MM/yyyy"
+              dateFormat="MMMM / yyyy"
               showMonthYearPicker
             />
           </div>

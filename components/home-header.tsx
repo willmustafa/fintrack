@@ -4,7 +4,7 @@ export default function HomeHeader() {
   return (
     <header
       id="header"
-      className="header py-20 text-center md:pt-24 lg:text-left xl:pt-16 xl:pb-16"
+      className="header text-center h-screen lg:text-left xl:pb-16 content-center"
     >
       <div className="px-4 sm:px-8 lg:grid lg:grid-cols-2 lg:gap-x-8">
         <div className="mb-16 lg:mt-32 xl:mt-40 xl:mr-12">

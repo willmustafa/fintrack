@@ -8,7 +8,7 @@ export default function Home() {
     <div>
       <Navbar />
       <div
-        className="container mx-auto max-w-7xl pt-16 px-6 flex-grow"
+        className="container mx-auto max-w-7xl px-6 flex-grow -mt-16"
         id="home"
       >
         <HomeHeader />

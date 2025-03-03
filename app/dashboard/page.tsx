@@ -1,7 +1,8 @@
 import CompactCard from "@/components/CompactCard";
 import { ArrowsUpFromLine } from "lucide-react";
+import CostsDivision from "@/components/costs-division";
 
-export default function PricingPage() {
+export default function DashboardPage() {
   return (
     <div className="w-full">
       <div className="grid grid-cols-4 gap-6">
@@ -17,6 +18,9 @@ export default function PricingPage() {
         <CompactCard title="Saldo" value={500}>
           <ArrowsUpFromLine width={16} />
         </CompactCard>
+      </div>
+      <div className="grid grid-cols-2">
+        <CostsDivision />
       </div>
     </div>
   );

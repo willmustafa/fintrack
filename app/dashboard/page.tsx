@@ -4,6 +4,7 @@ import CostsDivision from "@/components/costs-division";
 import TipsCard from "@/components/tips-card";
 import Neutral1 from "@/assets/tips/neutral-1.png";
 import ValueCard from "@/components/value-card";
+import EvolutionCard from "@/components/evolution-card";
 
 export default function DashboardPage() {
   return (
@@ -35,6 +36,9 @@ export default function DashboardPage() {
             <ValueCard title="Despesas" value={-500.43} />
             <ValueCard title="Receitas" value={500.43} />
           </div>
+        </div>
+        <div>
+          <EvolutionCard />
         </div>
       </div>
     </div>

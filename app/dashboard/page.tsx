@@ -5,6 +5,7 @@ import TipsCard from "@/components/tips-card";
 import Neutral1 from "@/assets/tips/neutral-1.png";
 import ValueCard from "@/components/value-card";
 import EvolutionCard from "@/components/evolution-card";
+import CreditCard from "@/components/credit-card";
 
 export default function DashboardPage() {
   return (
@@ -30,15 +31,18 @@ export default function DashboardPage() {
         {/*  message="Parece que essa semana não houveram nem gastos nem ganhos, as vezes é bom relaxar, se permita descansar."*/}
         {/*  imageUrl={Neutral1}*/}
         {/*/>*/}
-        <div className="flex flex-col text-left gap-4">
-          <h2 className="text-lg font-semibold">Pendências</h2>
-          <div className="grid grid-cols-2">
-            <ValueCard title="Despesas" value={-500.43} />
-            <ValueCard title="Receitas" value={500.43} />
-          </div>
-        </div>
+        {/*<div className="flex flex-col text-left gap-4">*/}
+        {/*  <h2 className="text-lg font-semibold">Pendências</h2>*/}
+        {/*  <div className="grid grid-cols-2">*/}
+        {/*    <ValueCard title="Despesas" value={-500.43} />*/}
+        {/*    <ValueCard title="Receitas" value={500.43} />*/}
+        {/*  </div>*/}
+        {/*</div>*/}
+        {/*<div>*/}
+        {/*  <EvolutionCard />*/}
+        {/*</div>*/}
         <div>
-          <EvolutionCard />
+          <CreditCard limit={2000} value={1900} />
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ export interface CreditCardProp {
 export default function CreditCard({ limit, value }: CreditCardProp) {
   const percentage = (value / limit) * 100;
   return (
-    <div className="bg-[var(--dark-blue)] rounded-2xl text-left text-white min-h-56 grid relative">
+    <div className="bg-[var(--dark-blue)] rounded-2xl text-left text-white min-h-56 grid relative w-11/12">
       <div className="absolute z-10 -right-6 top-5 bg-gray-600 rounded-tr-2xl rounded-br-2xl min-h-48 w-6 flex justify-center items-center">
         <NavArrowRight />
       </div>
@@ -18,14 +18,12 @@ export default function CreditCard({ limit, value }: CreditCardProp) {
           backgroundImage: `url('https://st2.depositphotos.com/3367263/49914/i/450/depositphotos_499146702-stock-photo-image-multiple-geometric-shapes-circles.jpg')`,
           width: `${percentage}%`,
         }}
-      ></div>
-      <span
-        className="text-[0.7rem] z-20 absolute bottom-1 text-right"
-        style={{ left: `${percentage - 8}%` }}
       >
-        <p>{percentage}%</p>
-        <p>do limite</p>
-      </span>
+        <span className="text-[0.7rem] z-20 absolute bottom-1 text-right right-1">
+          <p>{percentage}%</p>
+          <p>do limite</p>
+        </span>
+      </div>
       <div className="h-full px-8 py-10 flex flex-col justify-between z-20">
         <h3 className="text-lg">NuBank</h3>
         <h2 className="text-xl font-bold">R$ 500,00</h2>

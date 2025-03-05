@@ -1,3 +1,4 @@
+"use client";
 import CompactCard from "@/components/CompactCard";
 import { ArrowsUpFromLine } from "lucide-react";
 import CostsDivision from "@/components/costs-division";
@@ -7,6 +8,7 @@ import ValueCard from "@/components/value-card";
 import EvolutionCard from "@/components/evolution-card";
 import CreditCard from "@/components/credit-card";
 import DashedCard from "@/components/dashed-card";
+import Progress from "@/components/progress";
 
 export default function DashboardPage() {
   return (
@@ -42,15 +44,18 @@ export default function DashboardPage() {
         {/*<div>*/}
         {/*  <EvolutionCard />*/}
         {/*</div>*/}
-        <div className="grid grid-cols-2 w-full gap-8">
-          <CreditCard limit={2000} value={1900} />
-          <div className="flex flex-col">
-            <div className="text-left mb-3">
-              <h3>Faturas Abertas:</h3>
-              <h2 className="text-lg font-semibold">R$ 450,33</h2>
-            </div>
-            <DashedCard className="min-h-24 h-full">Novo cartão</DashedCard>
-          </div>
+        {/*<div className="grid grid-cols-2 w-full gap-8">*/}
+        {/*  <CreditCard limit={2000} value={1900} />*/}
+        {/*  <div className="flex flex-col">*/}
+        {/*    <div className="text-left mb-3">*/}
+        {/*      <h3>Faturas Abertas:</h3>*/}
+        {/*      <h2 className="text-lg font-semibold">R$ 450,33</h2>*/}
+        {/*    </div>*/}
+        {/*    <DashedCard className="min-h-24 h-full">Novo cartão</DashedCard>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
+        <div>
+          <Progress value={500} title="Viagem Japão" maxValue={2800} />
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import DatePicker from "react-datepicker";
 import "@/assets/styles/datepicker.css";
+import { ptBR } from "date-fns/locale/pt-BR";
 
 export default function DashboardLayout({
   children,
@@ -29,7 +30,7 @@ export default function DashboardLayout({
       >
         <nav className="flex flex-row py-6 container justify-between items-center h-24">
           <h2 className="text-base font-semibold uppercase">Dashboard</h2>
-          <div className="relative">
+          <div className="relative w-56">
             <DatePicker
               selected={selectedDate}
               onChange={(date) =>
@@ -37,6 +38,7 @@ export default function DashboardLayout({
               }
               dateFormat="MMMM / yyyy"
               showMonthYearPicker
+              locale={ptBR}
             />
           </div>
           <div>Ab</div>

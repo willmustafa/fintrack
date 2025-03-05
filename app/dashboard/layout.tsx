@@ -7,6 +7,8 @@ import clsx from "clsx";
 import DatePicker from "react-datepicker";
 import "@/assets/styles/datepicker.css";
 import { ptBR } from "date-fns/locale/pt-BR";
+import { Bell } from "iconoir-react";
+import Notifications from "@/components/notifications";
 
 export default function DashboardLayout({
   children,
@@ -41,7 +43,9 @@ export default function DashboardLayout({
               locale={ptBR}
             />
           </div>
-          <div>Ab</div>
+          <div>
+            <Notifications />
+          </div>
         </nav>
         <div className="inline-block text-center justify-center min-h-screen container m-auto">
           <Toaster position="top-right" />

@@ -30,7 +30,7 @@ export default function DashboardLayout({
           !isSidebarCollapsed ? "ml-64" : "ml-28",
         )}
       >
-        <nav className="flex flex-row py-6 container justify-between items-center h-24">
+        <nav className="flex flex-row py-6 container justify-between items-center h-24 pr-10">
           <h2 className="text-base font-semibold uppercase">Dashboard</h2>
           <div className="relative w-56">
             <DatePicker

@@ -13,7 +13,7 @@ import Progress from "@/components/progress";
 export default function DashboardPage() {
   return (
     <div className="w-full grid grid-cols-1 gap-6">
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid xl:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
         <CompactCard title="Saldo do mês" value={500}>
           <ArrowsUpFromLine width={16} />
         </CompactCard>

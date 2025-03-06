@@ -23,12 +23,12 @@ export default function Notifications() {
   return (
     <div className="relative">
       <div
-        className="relative"
+        className="relative group cursor-pointer"
         onClick={() => setShowNotification(!showNotification)}
       >
         <Bell
           className={clsx(
-            "hover:fill-black fill-white transition-all duration-300 cursor-pointer",
+            " fill-white transition-all duration-300 cursor-pointer group-hover:fill-black",
             showNotification && "fill-black",
           )}
         />

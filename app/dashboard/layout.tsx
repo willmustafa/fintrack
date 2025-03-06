@@ -19,7 +19,7 @@ export default function DashboardLayout({
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   return (
-    <main className="bg-slate-50">
+    <main className="bg-blue-50">
       <Sidebar
         isSidebarCollapsed={isSidebarCollapsed}
         setIsSidebarCollapsed={setIsSidebarCollapsed}
@@ -47,7 +47,7 @@ export default function DashboardLayout({
             <Notifications />
           </div>
         </nav>
-        <div className="inline-block text-center justify-center min-h-screen container m-auto">
+        <div className="inline-block text-center justify-center min-h-screen container m-auto pr-10">
           <Toaster position="top-right" />
           {children}
         </div>

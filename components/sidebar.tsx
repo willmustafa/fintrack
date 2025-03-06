@@ -8,6 +8,7 @@ import Logo from "@/assets/logo.svg";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { LogOut } from "lucide-react";
 
 interface SidebarLinkProps {
   path: string;
@@ -110,7 +111,7 @@ export default function Sidebar({
             tabIndex={0}
             aria-label="Sign Out"
           >
-            <Home className="h-6 w-6" aria-hidden="true" />
+            <LogOut className="h-6 w-6" aria-hidden="true" />
             {!isSidebarCollapsed && <span>Sair</span>}
           </div>
         </div>

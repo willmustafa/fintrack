@@ -28,12 +28,7 @@ export default function Notifications() {
         className="relative group cursor-pointer"
         onClick={() => setShowNotification(!showNotification)}
       >
-        <Bell
-          className={clsx(
-            " fill-white transition-all duration-300 cursor-pointer group-hover:fill-black",
-            showNotification && "fill-black",
-          )}
-        />
+        <Bell className="fill-none transition-all duration-300 cursor-pointer group-hover:fill-[var(--dark-blue)] stroke-[var(--dark-blue)]" />
         <span className="absolute -top-2 right-4 before:animate-[ping_3s_ease_infinite] before:bg-red-200 before:w-6 before:h-6 before:rounded-full before:absolute before:content-['']"></span>
         <span className="absolute -top-1 -right-1 rounded-full bg-red-400 text-[0.7rem] flex justify-center items-center w-4 h-4 font-semibold">
           {notifications.length}

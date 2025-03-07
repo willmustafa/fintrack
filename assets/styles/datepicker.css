@@ -1,9 +1,13 @@
 .react-datepicker__input-container input {
-    @apply text-black px-3 py-1 border-2 border-black rounded-lg text-center cursor-pointer capitalize w-full bg-transparent
+    @apply text-black px-3 py-1 border-2 border-[var(--dark-blue)] rounded-lg text-center cursor-pointer capitalize w-full bg-transparent transition
+}
+
+.react-datepicker__input-container:hover input {
+    @apply bg-[var(--dark-blue)] text-white
 }
 
 .react-datepicker {
-    @apply w-full text-sm bg-white text-black border-black border-1 inline-block rounded-lg relative
+    @apply w-full text-sm bg-white text-[var(--dark-blue)] border-[var(--dark-blue)] border-1 inline-block rounded-lg relative
 }
 
 .react-datepicker__month-wrapper {
@@ -19,11 +23,11 @@
 }
 
 .react-datepicker__header {
-    @apply rounded-tl-lg rounded-tr-lg border-black border-1 bg-black text-center py-2 relative text-sm text-white
+    @apply rounded-tl-lg rounded-tr-lg border-[var(--dark-blue)] border-1 bg-[var(--dark-blue)]  text-center py-2 relative text-sm text-white
 }
 
 .react-datepicker__triangle {
-    @apply fill-black text-black stroke-black
+    @apply fill-[var(--dark-blue)]  text-[var(--dark-blue)] stroke-[var(--dark-blue)]
 }
 
 

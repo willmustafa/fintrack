@@ -10,7 +10,7 @@ export interface TipsCardProps {
 export default function TipsCard({ title, imageUrl, message }: TipsCardProps) {
   // @ts-ignore
   return (
-    <Card className="bg-[#9086E9] text-white overflow-visible">
+    <Card className="bg-[#9086E9] text-white overflow-visible h-36">
       <CardBody className="flex flex-row overflow-visible min-h-32 content-center">
         <div className="w-1/4 relative">
           <Image

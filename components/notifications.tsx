@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState([1, 2, 3]);
+  const [notifications, setNotifications] = useState([
+    1, 2, 3, 1, 2, 2, 3, 4, 5,
+  ]);
   const [showNotification, setShowNotification] = useState(false);
   const ref = useRef(null);
 
@@ -21,7 +23,7 @@ export default function Notifications() {
   }, [ref]);
 
   return (
-    <div className="relative">
+    <div className={clsx("relative group", showNotification && "active")}>
       <div
         className="relative group cursor-pointer"
         onClick={() => setShowNotification(!showNotification)}
@@ -37,11 +39,13 @@ export default function Notifications() {
           {notifications.length}
         </span>
       </div>
-      {showNotification && (
-        <div
-          className="w-96 bg-white rounded-2xl p-4 max-w-xl absolute right-0 z-20 shadow-2xl top-10 border-1 border-gray-300"
-          ref={ref}
-        >
+      <div
+        className={clsx(
+          "w-96 h-[90vh] bg-white rounded-2xl max-w-xl absolute right-0 z-20 shadow-2xl top-10 group-[.active]:border-1 border-gray-300 transition-[max-height] duration-700 max-h-0 group-[.active]:max-h-[2000px] overflow-hidden group-[.active]:overflow-scroll border-0 ",
+        )}
+        ref={ref}
+      >
+        <div className="p-4">
           <div className="xs:mt-6 flex justify-between items-center">
             <h1 className="text-xl font-bold">
               Notificações
@@ -55,13 +59,13 @@ export default function Notifications() {
             </span>
           </div>
 
-          <div className=" overflow-y-scroll h-[75vh]">
+          <div className="overflow-y-scroll h-full">
             {notifications.map((notification) => (
               <NotificationCard />
             ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

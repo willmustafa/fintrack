@@ -72,9 +72,9 @@ export default function Progress({
           {toCurrency(value)} / {toCurrency(maxValue)}
         </p>
       </div>
-      <div className="w-3/4 relative">
+      <div className="w-3/4 relative py-2 overflow-hidden">
         <div
-          className="text-right transition-transform !duration-500 absolute z-10 w-full -top-2"
+          className="text-right transition-transform !duration-500 absolute z-10 w-full top-0"
           style={{ transform: `translateX(-${100 - percentage}%)` }}
         >
           <span

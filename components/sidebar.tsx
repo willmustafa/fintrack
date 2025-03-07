@@ -41,7 +41,7 @@ function SidebarLink({
     <NextLink
       key={name}
       className={clsx(
-        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full transition-all duration-300",
+        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full transition-all duration-500 z-50",
         pathname === path ? "active float-end" : "",
         hoveredIndex === index ? "active" : pathname !== path && "inactive",
         hoveredIndex > 0 &&
@@ -63,7 +63,7 @@ function SidebarLink({
           )}
         />
       </span>
-      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-top-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-14 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-14 group-[.active]:before:h-10 group-[.active]:before:rounded-br-[2rem] group-[.active]:before:bg-[var(--dark-blue)]"></div>
+      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-top-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-7 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-7 group-[.active]:before:h-10 group-[.active]:before:rounded-br-[2rem] group-[.active]:before:bg-[var(--dark-blue)] group-[.active]:z-10 bg-transparent"></div>
       {!collapsed && (
         <span
           className={clsx(
@@ -78,7 +78,7 @@ function SidebarLink({
       )}
       <div
         className={clsx(
-          "group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 transition-all duration-300 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100",
+          "group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100",
           collapsed && "!w-16",
         )}
       >
@@ -86,7 +86,7 @@ function SidebarLink({
           <Home className="w-5 h-5" />
         </div>
       </div>
-      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-bottom-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-14 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-14 group-[.active]:before:h-10 group-[.active]:before:rounded-tr-[2rem] group-[.active]:before:bg-[var(--dark-blue)]"></div>
+      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-bottom-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-7 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-7 group-[.active]:before:h-10 group-[.active]:before:rounded-tr-[2rem] group-[.active]:before:bg-[var(--dark-blue)] group-[.active]:z-10 bg-transparent"></div>
     </NextLink>
   );
 }

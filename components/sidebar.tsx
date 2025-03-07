@@ -41,10 +41,12 @@ function SidebarLink({
     <NextLink
       key={name}
       className={clsx(
-        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full",
+        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full transition-all duration-300",
         pathname === path ? "active float-end" : "",
-        hoveredIndex === index && "active",
-        hoveredIndex > 0 && hoveredIndex !== index && "other-hovered",
+        hoveredIndex === index ? "active" : pathname !== path && "inactive",
+        hoveredIndex > 0 &&
+          hoveredIndex !== index &&
+          "other-hovered !py-3 !px-6",
       )}
       role="menuitem"
       tabIndex={0}
@@ -53,20 +55,31 @@ function SidebarLink({
       onMouseEnter={() => onHover(index)}
       onMouseLeave={() => onHover(-1)}
     >
-      <div className="group-active:absolute group-active:-top-10 group-active:right-0 group-active:h-10 group-active:w-14 group-active:bg-blue-50 group-active:before:content-[''] group-active:before:absolute group-active:before:top-0 group-active:before:right-0 group-active:before:w-14 group-active:before:h-10 group-active:before:rounded-br-[2rem] group-active:before:bg-[var(--dark-blue)]"></div>
+      <Home
+        className={clsx(
+          "w-5 h-5 group-[.active]:opacity-0",
+          hoveredIndex > 0 && hoveredIndex !== index ? "!opacity-100" : "",
+        )}
+      />
+      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-top-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-14 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-14 group-[.active]:before:h-10 group-[.active]:before:rounded-br-[2rem] group-[.active]:before:bg-[var(--dark-blue)]"></div>
       {!collapsed && (
-        <span className="group-[.active]:flex-1 group-[.active]:text-right">
+        <span
+          className={clsx(
+            "group-[.active]:flex-1 group-[.active]:text-right transition-all duration-400 group-[.active]:mr-24",
+            hoveredIndex > 0 && hoveredIndex !== index
+              ? "!mr-0 !text-left"
+              : "",
+          )}
+        >
           {name}
         </span>
       )}
-      <div className="group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2">
+      <div className="group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 transition-all duration-300 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100">
         <div className="flex items-center justify-center p-2 bg-red w-10 h-10 rounded-full bg-red-200 text-black">
           <Home className="w-5 h-5" />
         </div>
       </div>
-      {pathname === path && (
-        <div className="absolute -bottom-10 right-0 h-10 w-14 bg-blue-50 before:content-[''] before:absolute before:top-0 before:right-0 before:w-14 before:h-10 before:rounded-tr-[2rem] before:bg-[var(--dark-blue)]"></div>
-      )}
+      <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-bottom-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-14 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-14 group-[.active]:before:h-10 group-[.active]:before:rounded-tr-[2rem] group-[.active]:before:bg-[var(--dark-blue)]"></div>
     </NextLink>
   );
 }

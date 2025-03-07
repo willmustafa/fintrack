@@ -1,5 +1,5 @@
 .react-datepicker__input-container input {
-    @apply text-black px-3 py-1 border-2 border-black rounded-lg text-center cursor-pointer capitalize w-full
+    @apply text-black px-3 py-1 border-2 border-black rounded-lg text-center cursor-pointer capitalize w-full bg-transparent
 }
 
 .react-datepicker {
@@ -22,7 +22,9 @@
     @apply rounded-tl-lg rounded-tr-lg border-black border-1 bg-black text-center py-2 relative text-sm text-white
 }
 
-
+.react-datepicker__triangle {
+    @apply fill-black text-black stroke-black
+}
 
 
 
@@ -72,17 +74,6 @@
 .react-datepicker-popper {
     z-index: 1;
     line-height: 0;
-}
-.react-datepicker-popper .react-datepicker__triangle {
-    stroke: #aeaeae;
-}
-.react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle {
-    fill: #f0f0f0;
-    color: #f0f0f0;
-}
-.react-datepicker-popper[data-placement^=top] .react-datepicker__triangle {
-    fill: #fff;
-    color: #fff;
 }
 
 .react-datepicker__header--time {

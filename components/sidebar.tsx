@@ -1,6 +1,11 @@
 "use client";
 
-import { ForwardRefExoticComponent, RefAttributes, SVGProps } from "react";
+import {
+  ForwardRefExoticComponent,
+  RefAttributes,
+  SVGProps,
+  useState,
+} from "react";
 import Image from "next/image";
 import { Home } from "iconoir-react";
 import LogoSmall from "@/public/logo-small.png";
@@ -17,25 +22,51 @@ interface SidebarLinkProps {
     Omit<SVGProps<SVGSVGElement>, "ref"> & RefAttributes<SVGSVGElement>
   >;
   collapsed: boolean;
+  hoveredIndex: number;
+  onHover: (index: number) => void;
+  index: number;
 }
 
-function SidebarLink({ path, name, collapsed }: SidebarLinkProps) {
+function SidebarLink({
+  path,
+  name,
+  collapsed,
+  hoveredIndex,
+  onHover,
+  index,
+}: SidebarLinkProps) {
   const pathname = usePathname();
 
   return (
     <NextLink
       key={name}
       className={clsx(
-        "flex items-center space-x-3 py-3 px-6 hover:bg-gray-700 rounded-md cursor-pointer",
-        pathname === path ? "active" : "",
+        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full",
+        pathname === path ? "active float-end" : "",
+        hoveredIndex === index && "active",
+        hoveredIndex > 0 && hoveredIndex !== index && "other-hovered",
       )}
       role="menuitem"
       tabIndex={0}
       aria-label={name}
       href={path}
+      onMouseEnter={() => onHover(index)}
+      onMouseLeave={() => onHover(-1)}
     >
-      {/*<icon className="h-6 w-6" aria-hidden="true" />*/}
-      {!collapsed && <span>{name}</span>}
+      <div className="group-active:absolute group-active:-top-10 group-active:right-0 group-active:h-10 group-active:w-14 group-active:bg-blue-50 group-active:before:content-[''] group-active:before:absolute group-active:before:top-0 group-active:before:right-0 group-active:before:w-14 group-active:before:h-10 group-active:before:rounded-br-[2rem] group-active:before:bg-[var(--dark-blue)]"></div>
+      {!collapsed && (
+        <span className="group-[.active]:flex-1 group-[.active]:text-right">
+          {name}
+        </span>
+      )}
+      <div className="group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2">
+        <div className="flex items-center justify-center p-2 bg-red w-10 h-10 rounded-full bg-red-200 text-black">
+          <Home className="w-5 h-5" />
+        </div>
+      </div>
+      {pathname === path && (
+        <div className="absolute -bottom-10 right-0 h-10 w-14 bg-blue-50 before:content-[''] before:absolute before:top-0 before:right-0 before:w-14 before:h-10 before:rounded-tr-[2rem] before:bg-[var(--dark-blue)]"></div>
+      )}
     </NextLink>
   );
 }
@@ -49,6 +80,7 @@ export default function Sidebar({
   isSidebarCollapsed,
   setIsSidebarCollapsed,
 }: SidebarProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number>(-1);
   const user = {
     name: "Thaila N",
     avatar:
@@ -82,12 +114,15 @@ export default function Sidebar({
 
       <div className="bg-[var(--dark-blue)] rounded-3xl h-full flex flex-col py-10">
         <nav className="flex-1">
-          {menuItems.map(({ name, link }) => (
+          {menuItems.map(({ name, link }, index) => (
             <SidebarLink
               name={name}
               path={link}
               key={name}
+              hoveredIndex={hoveredIndex}
               collapsed={isSidebarCollapsed}
+              onHover={(i) => setHoveredIndex(i)}
+              index={index}
             />
           ))}
         </nav>

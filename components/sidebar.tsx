@@ -55,12 +55,14 @@ function SidebarLink({
       onMouseEnter={() => onHover(index)}
       onMouseLeave={() => onHover(-1)}
     >
-      <Home
-        className={clsx(
-          "w-5 h-5 group-[.active]:opacity-0",
-          hoveredIndex > 0 && hoveredIndex !== index ? "!opacity-100" : "",
-        )}
-      />
+      <span className="relative w-5 h-5">
+        <Home
+          className={clsx(
+            "w-5 h-5 group-[.active]:opacity-0 z-50 absolute top-0",
+            hoveredIndex > 0 && hoveredIndex !== index ? "!opacity-100" : "",
+          )}
+        />
+      </span>
       <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-top-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-14 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-14 group-[.active]:before:h-10 group-[.active]:before:rounded-br-[2rem] group-[.active]:before:bg-[var(--dark-blue)]"></div>
       {!collapsed && (
         <span
@@ -74,7 +76,12 @@ function SidebarLink({
           {name}
         </span>
       )}
-      <div className="group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 transition-all duration-300 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100">
+      <div
+        className={clsx(
+          "group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 transition-all duration-300 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100",
+          collapsed && "!w-16",
+        )}
+      >
         <div className="flex items-center justify-center p-2 bg-red w-10 h-10 rounded-full bg-red-200 text-black">
           <Home className="w-5 h-5" />
         </div>
@@ -125,7 +132,7 @@ export default function Sidebar({
         )}
       </div>
 
-      <div className="bg-[var(--dark-blue)] rounded-3xl h-full flex flex-col py-10">
+      <div className="bg-[var(--dark-blue)] rounded-3xl h-full flex flex-col pb-10 pt-16">
         <nav className="flex-1">
           {menuItems.map(({ name, link }, index) => (
             <SidebarLink

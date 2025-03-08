@@ -1,17 +1,31 @@
 import { NavArrowRight } from "iconoir-react";
+import clsx from "clsx";
+import { Tooltip } from "@heroui/tooltip";
 
 export interface CreditCardProp {
   limit: number;
   value: number;
+  className: string;
 }
 
-export default function CreditCard({ limit, value }: CreditCardProp) {
+export default function CreditCard({
+  limit,
+  value,
+  className,
+}: CreditCardProp) {
   const percentage = (value / limit) * 100;
   return (
-    <div className="bg-[var(--dark-blue)] rounded-2xl text-left text-white min-h-56 grid relative w-11/12">
-      <div className="absolute z-10 -right-6 top-5 bg-gray-600 rounded-tr-2xl rounded-br-2xl min-h-48 w-6 flex justify-center items-center">
-        <NavArrowRight />
-      </div>
+    <div
+      className={clsx(
+        "bg-[var(--dark-blue)] rounded-2xl text-left text-white h-56 grid relative w-11/12",
+        className,
+      )}
+    >
+      <Tooltip placement="right" content="Clique para mudar o cartão">
+        <div className="absolute z-10 -right-6 top-5 bg-gray-600 rounded-tr-2xl rounded-br-2xl min-h-48 w-6 flex justify-center items-center hover:bg-gray-700 transition cursor-pointer">
+          <NavArrowRight />
+        </div>
+      </Tooltip>
       <div
         className="absolute h-full left-0 top-0 bg-black rounded-tl-2xl rounded-bl-2xl z-10 bg-cover bg-no-repeat bg-left opacity-80"
         style={{

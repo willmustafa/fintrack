@@ -9,6 +9,7 @@ import "@/assets/styles/datepicker.css";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Bell } from "iconoir-react";
 import Notifications from "@/components/notifications";
+import { Link } from "@heroui/link";
 
 export default function DashboardLayout({
   children,
@@ -52,6 +53,18 @@ export default function DashboardLayout({
           {children}
         </div>
       </section>
+      <footer className="w-full flex items-center justify-center py-3">
+        <Link
+          isExternal
+          className="flex items-center gap-1 text-current"
+          href="https://willmustafa.github.io/"
+          title="Willian Mustafa page"
+        >
+          <span className="text-default-600">
+            Criado por Willian Mustafa - Acesse meu Github e me pague um café!
+          </span>
+        </Link>
+      </footer>
     </main>
   );
 }

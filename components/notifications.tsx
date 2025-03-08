@@ -36,7 +36,7 @@ export default function Notifications() {
       </div>
       <div
         className={clsx(
-          "w-96 h-[90vh] bg-white rounded-2xl max-w-xl absolute right-0 z-20 shadow-2xl top-10 group-[.active]:border-1 border-gray-300 transition-[max-height] duration-700 max-h-0 group-[.active]:max-h-[2000px] overflow-hidden group-[.active]:overflow-scroll border-0 ",
+          "w-96 h-[90vh] bg-white rounded-2xl max-w-xl absolute right-0 z-20 shadow-2xl top-10 group-[.active]:border-1 border-gray-300 transition-[max-height] duration-700 max-h-0 group-[.active]:max-h-[2000px] overflow-hidden group-[.active]:overflow-y-scroll border-0 ",
         )}
         ref={ref}
       >
@@ -54,7 +54,7 @@ export default function Notifications() {
             </span>
           </div>
 
-          <div className="overflow-y-scroll h-full">
+          <div className="overflow-hidden h-full">
             {notifications.map((notification) => (
               <NotificationCard />
             ))}

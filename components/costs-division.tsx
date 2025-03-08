@@ -24,11 +24,11 @@ export default function CostsDivision() {
   const serie = [50, 20, 30];
 
   return (
-    <Card className="h-72">
-      <CardHeader>
-        <h2>Divisão de gastos</h2>
+    <Card className="h-72 shadow-none p-5">
+      <CardHeader className="px-0 pt-0">
+        <h2 className="text-lg font-semibold">Divisão de gastos</h2>
       </CardHeader>
-      <CardBody>
+      <CardBody className="px-0 pb-0">
         <ApexChart
           type="donut"
           series={serie}

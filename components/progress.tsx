@@ -66,16 +66,16 @@ export default function Progress({
 
   return (
     <div className="flex items-center border-2 gap-3 border-gray-400 py-2 px-5 rounded-2xl">
-      <div className="w-1/4 text-left break-words">
+      <div className="md:w-2/6 w-1/2 text-left break-words">
         <h2 className="font-semibold text-small">{title}</h2>
         <p className="text-[0.8rem]">
           {toCurrency(value)} / {toCurrency(maxValue)}
         </p>
       </div>
-      <div className="w-3/4 relative py-2 overflow-hidden">
+      <div className="md:w-4/6 w-1/2 relative py-2 overflow-hidden">
         <div
           className="text-right transition-transform !duration-500 absolute z-10 w-full top-0"
-          style={{ transform: `translateX(-${100 - percentage}%)` }}
+          style={{ transform: `translateX(-${100 - percentage - 10}%)` }}
         >
           <span
             className={clsx(
@@ -92,7 +92,7 @@ export default function Progress({
               "h-full bg-primary rounded-full transition-transform !duration-500",
               variantClasses[variant ?? "blue"],
             )}
-            style={{ transform: `translateX(-${100 - percentage}%)` }}
+            style={{ transform: `translateX(-${100 - percentage - 10}%)` }}
           ></div>
         </div>
       </div>

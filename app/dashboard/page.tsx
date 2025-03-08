@@ -49,18 +49,27 @@ export default function DashboardPage() {
         <div>
           <EvolutionCard />
         </div>
-        <div className="grid grid-cols-2 w-full gap-8">
-          <CreditCard limit={2000} value={500} />
-          <div className="flex flex-col">
-            <div className="text-left mb-3">
-              <h3>Faturas Abertas:</h3>
-              <h2 className="text-lg font-semibold">R$ 450,33</h2>
+        <div>
+          <h2 className="text-left mb-4 font-semibold text-lg">Cartões</h2>
+          <div className="grid grid-cols-3 w-full gap-8">
+            <CreditCard limit={2000} value={500} className="col-span-2" />
+            <div className="flex flex-col">
+              <div className="text-left mb-3">
+                <h3>Faturas Abertas:</h3>
+                <h2 className="text-lg font-semibold">R$ 450,33</h2>
+              </div>
+              <DashedCard className="min-h-24 h-full">Novo cartão</DashedCard>
             </div>
-            <DashedCard className="min-h-24 h-full">Novo cartão</DashedCard>
           </div>
         </div>
         <div>
-          <Progress value={500} title="Viagem Japão" maxValue={2800} />
+          <h3 className="text-lg font-semibold text-left mb-4">
+            Planejamentos
+          </h3>
+          <div className="flex gap-4 flex-col">
+            <Progress value={2800} title="Viagem Japão" maxValue={2800} />
+            <Progress value={500} title="Viagem Japão" maxValue={2800} />
+          </div>
         </div>
       </div>
     </div>

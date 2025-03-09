@@ -10,8 +10,8 @@ import { ptBR } from "date-fns/locale/pt-BR";
 import Notifications from "@/components/notifications";
 import { Link } from "@heroui/link";
 import CompactCard from "@/components/CompactCard";
-import { ArrowsUpFromLine } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
+import { ArrowsUpFromLine } from "iconoir-react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);

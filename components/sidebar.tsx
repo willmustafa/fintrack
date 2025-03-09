@@ -8,13 +8,19 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { CreditCard, Home, PageEdit, Planimetry, Wallet } from "iconoir-react";
+import {
+  CreditCard,
+  Home,
+  LogOut,
+  PageEdit,
+  Planimetry,
+  Wallet,
+} from "iconoir-react";
 import LogoSmall from "@/public/logo-small.png";
 import Logo from "@/assets/logo.svg";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { LogOut } from "lucide-react";
 
 interface SidebarLinkProps {
   path: string;

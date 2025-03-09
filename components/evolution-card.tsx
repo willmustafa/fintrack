@@ -1,128 +1,197 @@
 import Chart from "@/components/apex-chart";
 import { ApexOptions } from "apexcharts";
+import { toCurrency } from "@/helpers/numbers";
+import colors from "tailwindcss/colors";
+import { useState } from "react";
+import clsx from "clsx";
 
 export default function EvolutionCard() {
-  const barSeries = [
+  const barSeries: ApexOptions["series"] = [
     {
-      name: "Income",
+      name: "Gastos",
       type: "column",
-      data: [1.4, 2, 2.5, 1.5, 2.5, 2.8, 3.8, 4.6],
+      data: [500, 450, 1200, 900, 700, 900, 1300, 400],
+      color: colors.red["500"],
     },
     {
-      name: "Cashflow",
+      name: "Receitas",
       type: "column",
-      data: [1.1, 3, 3.1, 4, 4.1, 4.9, 6.5, 8.5],
+      data: [1000, 1300, 3000, 4000, 4100, 4900, 6500, 850],
+      color: colors.green["500"],
     },
     {
-      name: "Revenue",
+      name: "Saldo",
       type: "line",
-      data: [20, 29, 37, 36, 44, 45, 50, 58],
+      data: [500, 2000, 5000, 6800, 8000, 10000, 15000, 16000],
+      color: colors.yellow["500"],
     },
   ];
+
   const barOptions: ApexOptions = {
     stroke: {
       width: [1, 1, 4],
     },
-    title: {
-      text: "Evolução",
-      align: "left",
-      offsetX: 30,
-      offsetY: 50,
-      style: {
-        fontSize: "1.35rem",
-      },
-    },
     xaxis: {
-      categories: [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+      categories: [
+        "Mar/2025",
+        "Abr/2025",
+        "Mai/2025",
+        "Jun/2025",
+        "Jul/2025",
+        "Ago/2025",
+        "Set/2025",
+        "Out/2025",
+      ],
     },
     yaxis: [
       {
-        seriesName: "Income",
+        show: true,
+        seriesName: "Gastos",
         axisTicks: {
           show: true,
         },
         axisBorder: {
           show: true,
-          color: "#008FFB",
-        },
-        labels: {
-          style: {
-            colors: "#008FFB",
-          },
         },
         title: {
-          text: "Income (thousand crores)",
-          style: {
-            color: "#008FFB",
-          },
+          text: "Gastos e Receitas",
         },
         tooltip: {
           enabled: true,
         },
+        labels: {
+          formatter: (val: number, opts?: any): string | string[] => {
+            return toCurrency(val, { maximumFractionDigits: 0 });
+          },
+        },
       },
       {
-        seriesName: "Cashflow",
+        show: true,
+        seriesName: "Receitas",
+        axisTicks: {
+          show: false,
+        },
+        axisBorder: {
+          show: false,
+        },
+        labels: {
+          show: false,
+        },
+      },
+      {
+        show: true,
+        seriesName: "Saldo",
         opposite: true,
         axisTicks: {
           show: true,
         },
         axisBorder: {
           show: true,
-          color: "#00E396",
+          color: colors.yellow["500"],
         },
         labels: {
           style: {
-            colors: "#00E396",
+            colors: colors.yellow["500"],
+          },
+          formatter: (val: number, opts?: any): string | string[] => {
+            return toCurrency(val, { maximumFractionDigits: 0 });
           },
         },
         title: {
-          text: "Operating Cashflow (thousand crores)",
-          style: {
-            color: "#00E396",
-          },
-        },
-      },
-      {
-        seriesName: "Revenue",
-        opposite: true,
-        axisTicks: {
-          show: true,
-        },
-        axisBorder: {
-          show: true,
-          color: "#FEB019",
-        },
-        labels: {
-          style: {
-            colors: "#FEB019",
-          },
-        },
-        title: {
-          text: "Revenue (thousand crores)",
-          style: {
-            color: "#FEB019",
-          },
+          text: "Saldo",
         },
       },
     ],
     legend: {
-      position: "top",
-      horizontalAlign: "right",
-      offsetY: -30,
+      show: false,
     },
     chart: {
       toolbar: {
         show: false,
       },
     },
+    tooltip: {
+      y: {
+        formatter: (val: number, opts?: any) => {
+          return toCurrency(val);
+        },
+      },
+    },
   };
 
+  const [filteredOptions, setFilteredOptions] = useState(barOptions);
+  const [filteredSeries, setFilteredSeries] =
+    useState<ApexOptions["series"]>(barSeries);
+
+  function toggleSeries(serie?: string) {
+    const found = filteredSeries?.find(
+      (original) => (original as any).name === serie,
+    );
+    const _options = Object.assign({}, filteredOptions);
+
+    if (found && filteredSeries) {
+      setFilteredSeries(
+        filteredSeries.filter(
+          (original) => (original as any).name !== serie,
+        ) as any,
+      );
+      if (Array.isArray(_options.yaxis)) {
+        const foundOption = _options.yaxis?.find(
+          (original) => original.seriesName === serie,
+        );
+        if (foundOption) {
+          foundOption.show = true;
+          setFilteredOptions(_options);
+        }
+      }
+    } else {
+      setFilteredSeries([
+        ...(filteredSeries as any),
+        barSeries?.find((original) => (original as any).name === serie) as any,
+      ]);
+      if (Array.isArray(_options.yaxis)) {
+        const foundOption = _options.yaxis.find(
+          (original) => original.seriesName === serie,
+        );
+        if (foundOption) {
+          foundOption.show = false;
+          setFilteredOptions(_options);
+        }
+      }
+    }
+  }
+
   return (
-    <Chart
-      type="line"
-      options={barOptions}
-      series={barSeries}
-      toolbar={false}
-    />
+    <div>
+      <div className="flex justify-between">
+        <h3 className="text-lg font-semibold text-left mb-4">Evolução</h3>
+        <div className="flex justify-between gap-4">
+          {barSeries.map((serie) => (
+            <div
+              className={clsx(
+                "flex gap-1 items-center cursor-pointer",
+                !filteredSeries?.find(
+                  (original) => (original as any).name === serie.name,
+                ) && "opacity-30",
+              )}
+              onClick={() => toggleSeries(serie.name)}
+            >
+              <span
+                className="rounded-2xl w-6 h-4"
+                style={{ backgroundColor: serie.color }}
+              ></span>
+              <p className="text-sm">{serie.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Chart
+        type="line"
+        options={filteredOptions}
+        series={filteredSeries}
+        toolbar={false}
+      />
+    </div>
   );
 }

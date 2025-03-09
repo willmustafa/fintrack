@@ -28,3 +28,34 @@ h1 {
     font-size: 1.125rem;
     line-height: 1.75rem;
 }
+
+@layer utilities {
+    .scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: var(--dark-blue) #e0e0e0;
+    }
+
+    .scrollbar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb {
+        background-color: #666;
+        border-radius: 10px;
+        border: 3px solid #e0e0e0;
+    }
+
+    .scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: #444;
+    }
+
+    .scrollbar::-webkit-scrollbar-track {
+        background: #e0e0e0;
+        border-radius: 10px;
+    }
+
+    * {
+        @apply scrollbar;
+    }
+}

@@ -1,13 +1,14 @@
 "use client";
 
 import {
+  ElementType,
   ForwardRefExoticComponent,
   RefAttributes,
   SVGProps,
   useState,
 } from "react";
 import Image from "next/image";
-import { Home } from "iconoir-react";
+import { CreditCard, Home, PageEdit, Planimetry, Wallet } from "iconoir-react";
 import LogoSmall from "@/public/logo-small.png";
 import Logo from "@/assets/logo.svg";
 import NextLink from "next/link";
@@ -18,9 +19,7 @@ import { LogOut } from "lucide-react";
 interface SidebarLinkProps {
   path: string;
   name: string;
-  icon?: ForwardRefExoticComponent<
-    Omit<SVGProps<SVGSVGElement>, "ref"> & RefAttributes<SVGSVGElement>
-  >;
+  icon: ElementType;
   collapsed: boolean;
   hoveredIndex: number;
   onHover: (index: number) => void;
@@ -33,6 +32,7 @@ function SidebarLink({
   collapsed,
   hoveredIndex,
   onHover,
+  icon: Icon,
   index,
 }: SidebarLinkProps) {
   const pathname = usePathname();
@@ -56,7 +56,7 @@ function SidebarLink({
       onMouseLeave={() => onHover(-1)}
     >
       <span className="relative w-5 h-5">
-        <Home
+        <Icon
           className={clsx(
             "w-5 h-5 group-[.active]:opacity-0 z-50 absolute top-0",
             hoveredIndex > 0 && hoveredIndex !== index ? "!opacity-100" : "",
@@ -83,7 +83,7 @@ function SidebarLink({
         )}
       >
         <div className="flex items-center justify-center p-2 bg-red w-10 h-10 rounded-full bg-red-200 text-black">
-          <Home className="w-5 h-5" />
+          <Icon className="w-5 h-5" />
         </div>
       </div>
       <div className="group-[.other-hovered]:hidden group-[.active]:absolute group-[.active]:-bottom-10 group-[.active]:right-0 group-[.active]:h-10 group-[.active]:w-7 group-[.active]:bg-blue-50 group-[.active]:before:content-[''] group-[.active]:before:absolute group-[.active]:before:top-0 group-[.active]:before:right-0 group-[.active]:before:w-7 group-[.active]:before:h-10 group-[.active]:before:rounded-tr-[2rem] group-[.active]:before:bg-[var(--dark-blue)] group-[.active]:z-10 bg-transparent"></div>
@@ -108,10 +108,10 @@ export default function Sidebar({
   };
 
   const menuItems = [
-    { name: "Dashboard", link: "/dashboard", icon: Home },
-    { name: "Extrato", link: "/extrato", icon: Home },
-    { name: "Cartões", link: "/cartoes", icon: Home },
-    { name: "Bancos", link: "/bancos", icon: Home },
+    { name: "Dashboard", link: "/dashboard", icon: Planimetry },
+    { name: "Extrato", link: "/extrato", icon: PageEdit },
+    { name: "Cartões", link: "/cartoes", icon: CreditCard },
+    { name: "Bancos", link: "/bancos", icon: Wallet },
   ];
 
   return (
@@ -134,7 +134,7 @@ export default function Sidebar({
 
       <div className="bg-[var(--dark-blue)] rounded-3xl h-full flex flex-col pb-10 pt-16">
         <nav className="flex-1">
-          {menuItems.map(({ name, link }, index) => (
+          {menuItems.map(({ name, link, icon }, index) => (
             <SidebarLink
               name={name}
               path={link}
@@ -143,6 +143,7 @@ export default function Sidebar({
               collapsed={isSidebarCollapsed}
               onHover={(i) => setHoveredIndex(i)}
               index={index}
+              icon={icon}
             />
           ))}
         </nav>

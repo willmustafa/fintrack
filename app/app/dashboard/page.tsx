@@ -1,6 +1,5 @@
 "use client";
-import CompactCard from "@/components/CompactCard";
-import { ArrowsUpFromLine } from "lucide-react";
+
 import CostsDivision from "@/components/costs-division";
 import TipsCard from "@/components/tips-card";
 import Neutral1 from "@/assets/tips/neutral-1.png";
@@ -9,24 +8,17 @@ import EvolutionCard from "@/components/evolution-card";
 import CreditCard from "@/components/credit-card";
 import DashedCard from "@/components/dashed-card";
 import Progress from "@/components/progress";
+import { motion } from "framer-motion";
 
 export default function DashboardPage() {
   return (
-    <div className="w-full grid grid-cols-1 gap-6">
-      <div className="grid xl:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6">
-        <CompactCard title="Saldo do mês" value={500}>
-          <ArrowsUpFromLine width={16} />
-        </CompactCard>
-        <CompactCard title="Receitas" value={500}>
-          <ArrowsUpFromLine width={16} />
-        </CompactCard>
-        <CompactCard title="Gastos" value={500}>
-          <ArrowsUpFromLine width={16} />
-        </CompactCard>
-        <CompactCard title="Saldo" value={500}>
-          <ArrowsUpFromLine width={16} />
-        </CompactCard>
-      </div>
+    <motion.div
+      className="w-full grid grid-cols-1 gap-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="grid lg:grid-cols-2 grid-cols-1 gap-6">
         <div>
           <CostsDivision />
@@ -72,6 +64,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

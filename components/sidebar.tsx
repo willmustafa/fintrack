@@ -108,10 +108,10 @@ export default function Sidebar({
   };
 
   const menuItems = [
-    { name: "Dashboard", link: "/dashboard", icon: Planimetry },
-    { name: "Extrato", link: "/extrato", icon: PageEdit },
-    { name: "Cartões", link: "/cartoes", icon: CreditCard },
-    { name: "Bancos", link: "/bancos", icon: Wallet },
+    { name: "Dashboard", link: "/app/dashboard", icon: Planimetry },
+    { name: "Extrato", link: "/app/extrato", icon: PageEdit },
+    { name: "Cartões", link: "/app/cartoes", icon: CreditCard },
+    { name: "Bancos", link: "/app/bancos", icon: Wallet },
   ];
 
   return (

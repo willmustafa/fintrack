@@ -27,9 +27,7 @@ export default function RootLayout({
       <head>
         <title>FinTrack</title>
       </head>
-      <body
-        className={clsx("min-h-screen bg-background font-sans antialiased")}
-      >
+      <body className="min-h-screen bg-background font-sans vsc-initialized">
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen">
             <main>{children}</main>

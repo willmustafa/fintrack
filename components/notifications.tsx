@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([
-    1, 2, 3, 1, 2, 2, 3, 4, 5,
+    1, 2, 3, 4, 5, 6, 7, 8, 9,
   ]);
   const [showNotification, setShowNotification] = useState(false);
   const ref = useRef(null);
@@ -56,7 +56,7 @@ export default function Notifications() {
 
           <div className="overflow-hidden h-full">
             {notifications.map((notification) => (
-              <NotificationCard />
+              <NotificationCard key={notification} />
             ))}
           </div>
         </div>

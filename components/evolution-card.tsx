@@ -175,6 +175,7 @@ export default function EvolutionCard() {
                 ) && "opacity-30",
               )}
               onClick={() => toggleSeries(serie.name)}
+              key={serie.name}
             >
               <span
                 className="rounded-2xl w-6 h-4"
@@ -186,12 +187,7 @@ export default function EvolutionCard() {
         </div>
       </div>
 
-      <Chart
-        type="line"
-        options={filteredOptions}
-        series={filteredSeries}
-        toolbar={false}
-      />
+      <Chart type="line" options={filteredOptions} series={filteredSeries} />
     </div>
   );
 }

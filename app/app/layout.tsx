@@ -12,6 +12,7 @@ import { Link } from "@heroui/link";
 import CompactCard from "@/components/CompactCard";
 import { AnimatePresence } from "framer-motion";
 import { ArrowsUpFromLine } from "iconoir-react";
+import InteractionButton from "@/components/interaction-button";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
@@ -19,7 +20,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <AnimatePresence mode="wait">
-      <main className="bg-blue-50">
+      <main className="bg-blue-50 min-h-svh grid">
         <Sidebar
           isSidebarCollapsed={isSidebarCollapsed}
           setIsSidebarCollapsed={setIsSidebarCollapsed}
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <Notifications />
             </div>
           </nav>
-          <div className="inline-block text-center justify-center min-h-screen container m-auto pr-10">
+          <div className="inline-block text-center justify-center h-full container m-auto pr-10">
             <Toaster position="top-right" />
             <div className="grid xl:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-6 mb-6">
               <CompactCard title="Saldo do mês" value={500}>
@@ -66,7 +67,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {children}
           </div>
         </section>
-        <footer className="w-full flex items-center justify-center py-3">
+        <footer
+          className={clsx(
+            "flex items-center justify-center py-3",
+            !isSidebarCollapsed ? "ml-64" : "ml-28",
+          )}
+        >
           <Link
             isExternal
             className="flex items-center gap-1 text-current"
@@ -78,6 +84,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
         </footer>
+        <InteractionButton />
       </main>
     </AnimatePresence>
   );

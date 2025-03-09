@@ -70,7 +70,7 @@ export const Navbar = () => {
               Recursos
             </NextLink>
           </NavbarItem>
-          <NextLink href="dashboard">
+          <NextLink href="app">
             <Button color="success" className="text-white font-semibold">
               Comece já
             </Button>

@@ -21,13 +21,6 @@ import colors from "tailwindcss/colors";
 import { toLocalDate } from "@/helpers/dates";
 import clsx from "clsx";
 import { toCurrency } from "@/helpers/numbers";
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@heroui/dropdown";
-import { Button } from "@heroui/button";
 
 export default function ExtractPage() {
   const [globalFilter, setGlobalFilter] = useState("");

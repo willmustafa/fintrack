@@ -9,6 +9,10 @@ import CreditCard from "@/components/credit-card";
 import DashedCard from "@/components/dashed-card";
 import Progress from "@/components/progress";
 import { motion } from "framer-motion";
+import { Select, SelectItem } from "@heroui/select";
+import { Avatar } from "@heroui/avatar";
+import { animals } from "@/components/income-form";
+import Teste from "@/components/teste";
 
 export default function DashboardPage() {
   return (
@@ -62,6 +66,9 @@ export default function DashboardPage() {
             <Progress value={2800} title="Viagem Japão" maxValue={2800} />
             <Progress value={500} title="Viagem Japão" maxValue={2800} />
           </div>
+        </div>
+        <div>
+          <Teste />
         </div>
       </div>
     </motion.div>

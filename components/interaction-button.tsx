@@ -49,11 +49,7 @@ export default function InteractionButton() {
       </Dropdown>
       <Drawer isOpen={isOpen} onOpenChange={onOpenChange} hideCloseButton>
         <DrawerContent>
-          {() => (
-            <DrawerBody>
-              {selectedMenu === "income" && <IncomeForm />}
-            </DrawerBody>
-          )}
+          {selectedMenu === "income" && <IncomeForm />}
         </DrawerContent>
       </Drawer>
     </>

@@ -48,7 +48,12 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-left mb-4 font-semibold text-lg">Cartões</h2>
           <div className="grid grid-cols-3 w-full gap-8">
-            <CreditCard limit={2000} value={500} className="col-span-2" />
+            <CreditCard
+              limit={2000}
+              value={500}
+              className="col-span-2"
+              showArrow
+            />
             <div className="flex flex-col">
               <div className="text-left mb-3">
                 <h3>Faturas Abertas:</h3>

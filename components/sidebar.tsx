@@ -47,10 +47,10 @@ function SidebarLink({
     <NextLink
       key={name}
       className={clsx(
-        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 hover:bg-gray-700 rounded-md cursor-pointer relative w-full transition-all duration-500 z-50",
+        "group flex items-center space-x-3 h-12 [&:not(.active)]:py-3 [&:not(.active)]:px-6 rounded-md cursor-pointer relative w-full transition-all duration-500 z-50",
         pathname === path ? "active float-end" : "",
         hoveredIndex === index ? "active" : pathname !== path && "inactive",
-        hoveredIndex > 0 &&
+        hoveredIndex >= 0 &&
           hoveredIndex !== index &&
           "other-hovered !py-3 !px-6",
       )}
@@ -65,7 +65,7 @@ function SidebarLink({
         <Icon
           className={clsx(
             "w-5 h-5 group-[.active]:opacity-0 z-50 absolute top-0",
-            hoveredIndex > 0 && hoveredIndex !== index ? "!opacity-100" : "",
+            hoveredIndex >= 0 && hoveredIndex !== index ? "!opacity-100" : "",
           )}
         />
       </span>
@@ -74,7 +74,7 @@ function SidebarLink({
         <span
           className={clsx(
             "group-[.active]:flex-1 group-[.active]:text-right transition-all duration-400 group-[.active]:mr-24",
-            hoveredIndex > 0 && hoveredIndex !== index
+            hoveredIndex >= 0 && hoveredIndex !== index
               ? "!mr-0 !text-left"
               : "",
           )}
@@ -84,7 +84,7 @@ function SidebarLink({
       )}
       <div
         className={clsx(
-          "group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-20  group-[.active]:h-full flex items-center pl-2 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100",
+          "group-[.other-hovered]:hidden group-[.inactive]:hidden group-[.active]:rounded-tl-3xl group-[.active]:rounded-bl-3xl group-[.active]:bg-blue-50 group-[.active]:w-16  group-[.active]:h-full flex items-center pl-2 group-[.active]:absolute group-[.active]:right-0 opacity-0 group-[.active]:opacity-100",
           collapsed && "!w-16",
         )}
       >
@@ -155,7 +155,8 @@ export default function Sidebar({
         </nav>
 
         <div className="mt-auto">
-          <div
+          <NextLink
+            href="/app/perfil"
             className="flex items-center space-x-3 p-3 hover:bg-gray-700 rounded-md cursor-pointer px-6"
             role="button"
             tabIndex={0}
@@ -166,7 +167,7 @@ export default function Sidebar({
               style={{ backgroundImage: `url(${user.avatar})` }}
             ></div>
             {!isSidebarCollapsed && <span>Thaila N</span>}
-          </div>
+          </NextLink>
           <div
             className="flex items-center space-x-3 p-3 hover:bg-gray-700 rounded-md cursor-pointer px-6"
             role="button"

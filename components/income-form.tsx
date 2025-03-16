@@ -9,6 +9,7 @@ import { getLocalTimeZone, now } from "@internationalized/date";
 import { Select, SelectItem } from "@heroui/select";
 import { Avatar } from "@heroui/avatar";
 import { useDisclosure } from "@heroui/use-disclosure";
+import { PureComponent, StrictMode, useState } from "react";
 
 export const animals = [
   { key: "cat", label: "Cat" },
@@ -28,6 +29,7 @@ export const animals = [
 
 export default function IncomeForm() {
   const { isOpen, onOpenChange } = useDisclosure();
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   return (
     <div className="flex flex-col w-full h-full">
@@ -64,6 +66,8 @@ export default function IncomeForm() {
           classNames={{ base: "!mt-8" }}
           selectionMode="single"
           items={animals}
+          onOpenChange={setIsSelectOpen}
+          isOpen={isSelectOpen}
         >
           {(animals) => (
             <SelectItem
@@ -80,6 +84,7 @@ export default function IncomeForm() {
             </SelectItem>
           )}
         </Select>
+
         <Select
           label="Categoria"
           labelPlacement="outside"

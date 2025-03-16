@@ -1,31 +1,48 @@
-import { NavArrowRight } from "iconoir-react";
+import { EditPencil, NavArrowRight } from "iconoir-react";
 import clsx from "clsx";
 import { Tooltip } from "@heroui/tooltip";
 
 export interface CreditCardProp {
   limit: number;
   value: number;
-  className: string;
+  className?: string;
+  showArrow?: boolean;
+  showEdit?: boolean;
+  onEditClick?: (show: boolean) => void;
 }
 
 export default function CreditCard({
   limit,
   value,
   className,
+  showArrow,
+  showEdit,
+  onEditClick = () => {},
 }: CreditCardProp) {
   const percentage = (value / limit) * 100;
   return (
     <div
       className={clsx(
-        "bg-[var(--dark-blue)] rounded-2xl text-left text-white h-56 grid relative w-11/12",
+        "bg-[var(--dark-blue)] rounded-2xl text-left text-white h-56 grid relative",
         className,
+        showArrow ? "w-11/12" : "w-full",
       )}
     >
-      <Tooltip placement="right" content="Clique para mudar o cartão">
-        <div className="absolute z-10 -right-6 top-5 bg-gray-600 rounded-tr-2xl rounded-br-2xl min-h-48 w-6 flex justify-center items-center hover:bg-gray-700 transition cursor-pointer">
-          <NavArrowRight />
+      {showArrow && (
+        <Tooltip placement="right" content="Clique para mudar o cartão">
+          <div className="absolute z-10 -right-6 top-5 bg-gray-600 rounded-tr-2xl rounded-br-2xl min-h-48 w-6 flex justify-center items-center hover:bg-gray-700 transition cursor-pointer">
+            <NavArrowRight />
+          </div>
+        </Tooltip>
+      )}
+      {showEdit && (
+        <div
+          className="absolute right-4 top-4 text-gray-500 hover:text-white transition z-30 cursor-pointer"
+          onClick={() => onEditClick(true)}
+        >
+          <EditPencil />
         </div>
-      </Tooltip>
+      )}
       <div
         className="absolute h-full left-0 top-0 bg-black rounded-tl-2xl rounded-bl-2xl z-10 bg-cover bg-no-repeat bg-left opacity-80"
         style={{

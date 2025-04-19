@@ -1,7 +1,13 @@
 import { EditPencil } from "iconoir-react";
 import clsx from "clsx";
+import { toCurrency } from "@/helpers/numbers";
 
 export interface BankCardProp {
+  name: string;
+  balance: number;
+  predicted_balance: number;
+  balance_invested: number;
+  background: string;
   className?: string;
   showEdit?: boolean;
   onEditClick?: (show: boolean) => void;
@@ -11,6 +17,11 @@ export default function BankCard({
   className,
   showEdit,
   onEditClick = () => {},
+  name,
+  balance,
+  predicted_balance,
+  balance_invested,
+  background,
 }: BankCardProp) {
   return (
     <div
@@ -22,12 +33,12 @@ export default function BankCard({
       <div
         className="absolute h-full left-0 top-0 bg-black rounded-2xl z-10 bg-cover bg-no-repeat bg-left opacity-40 w-full"
         style={{
-          backgroundImage: `url('https://st2.depositphotos.com/3367263/49914/i/450/depositphotos_499146702-stock-photo-image-multiple-geometric-shapes-circles.jpg')`,
+          backgroundImage: `url('${background}')`,
         }}
       ></div>
       <div className="h-full px-5 py-6 flex flex-col justify-between z-20">
         <div className="flex">
-          <h3 className="text-lg w-5/6">NuBank</h3>
+          <h3 className="text-lg w-5/6">{name}</h3>
           <div className="flex z-30 justify-end w-1/6">
             <EditPencil
               width={18}
@@ -39,17 +50,19 @@ export default function BankCard({
         <div className="grid grid-cols-2">
           <div>
             <p className="text-small">Saldo atual</p>
-            <h2 className="text-xl font-bold">R$ 500,00</h2>
+            <h2 className="text-xl font-bold">{toCurrency(balance)}</h2>
           </div>
           <div className="text-end">
             <p className="text-small">Saldo previsto</p>
-            <h2 className="text-xl font-bold">R$ 500,00</h2>
+            <h2 className="text-xl font-bold">
+              {toCurrency(predicted_balance)}
+            </h2>
           </div>
         </div>
         <div className="flex flex-row text-small">
           <div className="w-3/4">
             <p className="text-small">Saldo destinado à um objetivo</p>
-            <p className="font-semibold">R$ 2.000</p>
+            <p className="font-semibold">{toCurrency(balance_invested)}</p>
           </div>
         </div>
       </div>

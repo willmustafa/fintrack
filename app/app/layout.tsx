@@ -9,7 +9,7 @@ import "@/assets/styles/datepicker.css";
 import { ptBR } from "date-fns/locale/pt-BR";
 import Notifications from "@/components/notifications";
 import { Link } from "@heroui/link";
-import CompactCard from "@/components/CompactCard";
+import CompactCard from "@/components/compact-card";
 import { AnimatePresence } from "framer-motion";
 import { ArrowsUpFromLine } from "iconoir-react";
 import InteractionButton from "@/components/interaction-button";

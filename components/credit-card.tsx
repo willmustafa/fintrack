@@ -7,7 +7,7 @@ export interface CreditCardProp {
   limit: number;
   value: number;
   name: string;
-  due_date: string;
+  due_date: string | number;
   background: string;
   className?: string;
   showArrow?: boolean;
@@ -80,7 +80,11 @@ export default function CreditCard({
           </div>
           <div className="w-1/4 text-right">
             <p>Venc.</p>
-            <p className="font-semibold">{due_date}</p>
+            <p className="font-semibold">
+              {isNaN(parseInt(due_date.toString()))
+                ? due_date
+                : `${due_date}/${new Date().toISOString().substring(5, 7)}`}
+            </p>
           </div>
         </div>
       </div>

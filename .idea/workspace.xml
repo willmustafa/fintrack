@@ -4,8 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f9a73543-c64f-4a76-973d-66c3ccbbaf62" name="Changes" comment="Reset">
+    <list default="true" id="f9a73543-c64f-4a76-973d-66c3ccbbaf62" name="Changes" comment="init">
       <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/.expo/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/.expo/devices.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/.tamagui/tamagui.config.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/AGENTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/App.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/babel.config.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/package-lock.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/App.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/components/StatCard.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/components/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/navigation/AppNavigator.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/navigation/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/screens/DashboardScreen.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/utils/formatCurrency.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/tamagui.config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/tsconfig.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -109,7 +128,7 @@
       <workItem from="1744043658320" duration="142000" />
       <workItem from="1744131677301" duration="1664000" />
       <workItem from="1758305225758" duration="958000" />
-      <workItem from="1764086902301" duration="5810000" />
+      <workItem from="1764086902301" duration="6426000" />
     </task>
     <task id="LOCAL-00001" summary="heroui">
       <option name="closed" value="true" />
@@ -216,7 +235,8 @@
     <MESSAGE value="notif" />
     <MESSAGE value="Arruma dependencia" />
     <MESSAGE value="Reset" />
-    <option name="LAST_COMMIT_MESSAGE" value="Reset" />
+    <MESSAGE value="init" />
+    <option name="LAST_COMMIT_MESSAGE" value="init" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

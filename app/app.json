@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Fintrack",
+    "slug": "fintrack",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "entryPoint": "./src/App.tsx",
+    "sdkVersion": "54.0.0",
+    "platforms": ["ios", "android", "web"],
+    "assetBundlePatterns": ["**/*"],
+    "description": "Aplicativo de controle financeiro pessoal com Expo, Tamagui e suporte web.",
+    "ios": {
+      "supportsTablet": true
+    }
+  }
+}

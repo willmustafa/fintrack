@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f9a73543-c64f-4a76-973d-66c3ccbbaf62" name="Changes" comment="Reset">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2szxhNixRiu2FYCD49I8xlkTe5U" />
+  <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="Update" />
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;mobile-first&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/willian/Documentos/pessoal/fintrack&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;prettierjs.PrettierConfiguration.Package&quot;: &quot;/home/willian/Documentos/pessoal/fintrack/node_modules/prettier&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/home/willian/Documentos/pessoal/fintrack/app/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="npm.Next.js: server-side">
+    <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
+      <method v="2" />
+    </configuration>
+    <configuration name="Next.js: server-side" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f9a73543-c64f-4a76-973d-66c3ccbbaf62" name="Changes" comment="" />
+      <created>1739472322180</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739472322180</updated>
+      <workItem from="1739472323218" duration="4154000" />
+      <workItem from="1739529764636" duration="1819000" />
+      <workItem from="1739563923506" duration="614000" />
+      <workItem from="1739790630247" duration="206000" />
+      <workItem from="1739875345382" duration="2137000" />
+      <workItem from="1739877689729" duration="18000" />
+      <workItem from="1739878312366" duration="602000" />
+      <workItem from="1739879417045" duration="7000" />
+      <workItem from="1739882971991" duration="2000" />
+      <workItem from="1740588334003" duration="13730000" />
+      <workItem from="1740653262238" duration="16000" />
+      <workItem from="1741357211861" duration="9867000" />
+      <workItem from="1741618383919" duration="1815000" />
+      <workItem from="1744043658320" duration="142000" />
+      <workItem from="1744131677301" duration="1664000" />
+      <workItem from="1758305225758" duration="958000" />
+      <workItem from="1764086902301" duration="5810000" />
+    </task>
+    <task id="LOCAL-00001" summary="heroui">
+      <option name="closed" value="true" />
+      <created>1739479214426</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1739479214426</updated>
+    </task>
+    <task id="LOCAL-00002" summary="front">
+      <option name="closed" value="true" />
+      <created>1739531554572</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1739531554572</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Clean">
+      <option name="closed" value="true" />
+      <created>1739877700315</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1739877700315</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Compact Cards">
+      <option name="closed" value="true" />
+      <created>1740592239183</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1740592239183</updated>
+    </task>
+    <task id="LOCAL-00005" summary="date">
+      <option name="closed" value="true" />
+      <created>1740606888260</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1740606888260</updated>
+    </task>
+    <task id="LOCAL-00006" summary="sidebar">
+      <option name="closed" value="true" />
+      <created>1741358601091</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1741358601091</updated>
+    </task>
+    <task id="LOCAL-00007" summary="datepicker triangle">
+      <option name="closed" value="true" />
+      <created>1741359409296</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1741359409296</updated>
+    </task>
+    <task id="LOCAL-00008" summary="notif">
+      <option name="closed" value="true" />
+      <created>1741364223113</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1741364223113</updated>
+    </task>
+    <task id="LOCAL-00009" summary="notif">
+      <option name="closed" value="true" />
+      <created>1741370350900</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1741370350900</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Arruma dependencia">
+      <option name="closed" value="true" />
+      <created>1744131844122</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1744131844123</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Reset">
+      <option name="closed" value="true" />
+      <created>1764086973261</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1764086973261</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="heroui" />
+    <MESSAGE value="front" />
+    <MESSAGE value="Clean" />
+    <MESSAGE value="Compact Cards" />
+    <MESSAGE value="date" />
+    <MESSAGE value="sidebar" />
+    <MESSAGE value="datepicker triangle" />
+    <MESSAGE value="notif" />
+    <MESSAGE value="Arruma dependencia" />
+    <MESSAGE value="Reset" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reset" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

@@ -6,7 +6,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/text';
-import { Button, Field } from '@/components/ui';
+import { Button, Field, Notice } from '@/components/ui';
 import { inviteLink } from '@/data/seed';
 import { useFintrack, useSnapshot } from '@/store/fintrack-store';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -28,6 +28,7 @@ export default function ConvidarScreen() {
   const [selected, setSelected] = useState<string[]>(shareables.map((item) => item.id));
   const [sending, setSending] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = (id: string) =>
     setSelected((current) =>
@@ -36,9 +37,12 @@ export default function ConvidarScreen() {
 
   const onSend = async () => {
     setSending(true);
+    setError(null);
     try {
       await sendInvite(email.trim(), selected);
       router.back();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Não foi possível enviar o convite.');
     } finally {
       setSending(false);
     }
@@ -73,6 +77,8 @@ export default function ConvidarScreen() {
         <ScrollView
           contentContainerStyle={{ padding: spacing.lg, paddingTop: 0, gap: spacing.lg }}
           keyboardShouldPersistTaps="handled">
+          {error ? <Notice tone="error" message={error} /> : null}
+
           <Text size="small" color={colors.textSecondary} style={{ lineHeight: 20 }}>
             A pessoa convidada poderá ver e lançar transações nas contas e cartões que você
             selecionar.

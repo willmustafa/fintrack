@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/avatar';
 import { Picker, type PickerOption } from '@/components/picker';
 import { Text } from '@/components/text';
-import { Segmented } from '@/components/ui';
+import { Notice, Segmented } from '@/components/ui';
 import { centsToInput, formatDate, inputToNumber } from '@/lib/format';
 import { useCurrentPerson, useFintrack, useSnapshot } from '@/store/fintrack-store';
 import { colors, fonts, radius, spacing } from '@/theme/tokens';
@@ -70,6 +70,7 @@ export default function NovaTransacaoScreen() {
   const [ownerId, setOwnerId] = useState<OwnerId>((person?.id as OwnerId) ?? 'ana');
   const [recurring, setRecurring] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [openPicker, setOpenPicker] = useState<
     'conta' | 'destino' | 'categoria' | 'data' | 'pessoa' | null
   >(null);
@@ -101,6 +102,7 @@ export default function NovaTransacaoScreen() {
   const onSave = async () => {
     if (!canSave) return;
     setSaving(true);
+    setError(null);
     try {
       await addTransaction({
         kind,
@@ -114,6 +116,12 @@ export default function NovaTransacaoScreen() {
         recurring,
       });
       router.back();
+    } catch (caught) {
+      // A recusa vem do backend (saldo, limite, validação) — a tela fica aberta
+      // com o formulário preenchido para a pessoa corrigir e tentar de novo.
+      setError(
+        caught instanceof Error ? caught.message : 'Não foi possível salvar a transação.',
+      );
     } finally {
       setSaving(false);
     }
@@ -148,6 +156,8 @@ export default function NovaTransacaoScreen() {
         <ScrollView
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
           keyboardShouldPersistTaps="handled">
+          {error ? <Notice tone="error" message={error} /> : null}
+
           <Segmented options={KINDS} value={kind} onChange={onChangeKind} />
 
           <View

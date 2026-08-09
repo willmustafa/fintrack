@@ -75,11 +75,11 @@ export default function EditarPerfilScreen() {
             hint="Usado para entrar e para receber convites de compartilhamento."
           />
 
+          {/* Habilitado sempre: `onSave` marca `touched` e mostra o que está errado. */}
           <Button
             title="Salvar alterações"
             onPress={onSave}
             loading={saving}
-            disabled={!canSave}
             style={{ marginTop: spacing.sm }}
           />
 

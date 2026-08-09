@@ -18,3 +18,9 @@ Convenções deste projeto:
 - UI e conteúdo em pt-BR; formatação de moeda/data em `src/lib/format.ts` (sem depender de `Intl`).
 - Tabs usam `Tabs` de `expo-router/js-tabs` com a `TabBar` customizada — `Tabs` de `expo-router`
   está deprecado.
+- Testes ficam em `tests/` (Jest + React Native Testing Library, cobertura mínima de 80%) e
+  `e2e/` (Playwright sobre o build web). `render` e `renderHook` da RNTL v14 são **assíncronos** —
+  sempre `await`. Para `Switch` use `fireEvent(node, 'valueChange', valor)`; `userEvent.press`
+  não funciona nele.
+- Mudou `src/services/api.ts`? Atualize `tests/services/api-http-mode.test.ts` junto: é lá que o
+  contrato com o backend em Go está fixado.

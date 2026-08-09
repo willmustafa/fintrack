@@ -15,6 +15,47 @@ npm run android
 npm run typecheck
 ```
 
+## Testes
+
+```bash
+npm test               # unidade + integração (Jest + React Native Testing Library)
+npm run test:watch
+npm run test:coverage  # falha abaixo de 80% em statements/branches/functions/lines
+npm run test:e2e       # fluxos ponta a ponta no navegador (Playwright)
+```
+
+```
+tests/
+  lib/          funções puras: formatação pt-BR, cálculos e validação
+  services/     contrato da API nos dois modos (seed em memória e HTTP)
+  store/        sessão e coerência do snapshot depois de cada mutação
+  components/   Text, Card, Button, Field, Picker, ActionSheet, gráficos, TabBar…
+  screens/      cada rota de `src/app` renderizada com o store real
+  helpers/      wrappers de render e mock do expo-router
+e2e/            Playwright sobre o build web
+```
+
+**`tests/services/api-http-mode.test.ts` é a rede de segurança da troca do mock
+pelo backend em Go**: fixa método, rota, corpo e headers de cada endpoint da
+tabela acima, além do formato de erro. Se o Go divergir do contrato, esse
+arquivo acusa antes de qualquer tela quebrar.
+
+Os testes de tela rodam com a `api` em modo mock sobre o seed, exercitando o
+caminho completo tela → store → api. Para simular a recusa do backend basta um
+`jest.spyOn(api, '...').mockRejectedValue(...)`.
+
+### E2E
+
+O Playwright exporta o app para `dist/` (`expo export --platform web`) e sobe o
+servidor de produção do Expo — é o mesmo bundle que iria para o ar, sem
+emulador no caminho. Na primeira vez, instale o navegador e as bibliotecas de
+sistema:
+
+```bash
+npx playwright install chromium
+sudo npx playwright install-deps chromium   # libatk, libnss3, libgbm…
+```
+
 ## Estrutura
 
 ```

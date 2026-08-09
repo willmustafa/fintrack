@@ -149,10 +149,14 @@ export default function CadastroScreen() {
             </Text>
           </Pressable>
 
+          {/*
+            O botão fica habilitado de propósito: `onSubmit` marca `touched` e
+            revela quais campos estão errados. Desabilitar aqui deixaria a
+            pessoa travada sem saber o que falta.
+          */}
           <Button
             title="Criar conta"
             onPress={onSubmit}
-            disabled={!canSubmit}
             loading={loading}
             style={{ marginTop: spacing.xs }}
           />

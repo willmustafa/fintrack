@@ -47,6 +47,10 @@ function RootNavigator() {
         <Stack.Screen name="financiamento/index" />
         <Stack.Screen name="financiamento/amortizacao" />
         <Stack.Screen name="perfil/index" />
+        <Stack.Screen name="perfil/editar" />
+        <Stack.Screen name="perfil/notificacoes" />
+        <Stack.Screen name="perfil/seguranca" />
+        <Stack.Screen name="perfil/compartilhados" />
         <Stack.Screen name="perfil/convidar" options={{ presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>

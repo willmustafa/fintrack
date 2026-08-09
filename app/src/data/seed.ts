@@ -12,6 +12,7 @@ import type {
   Loan,
   MonthSummary,
   Person,
+  Preferences,
   Transaction,
 } from '@/types';
 
@@ -309,8 +310,23 @@ export const loans: Loan[] = [
 ];
 
 export const invites: Invite[] = [
-  { id: 'inv1', email: 'joana@email.com', status: 'pendente', sentDaysAgo: 2 },
+  {
+    id: 'inv1',
+    email: 'joana@email.com',
+    status: 'pendente',
+    sentDaysAgo: 2,
+    accountIds: ['corrente'],
+  },
 ];
+
+export const preferences: Preferences = {
+  notifications: {
+    transactions: true,
+    invoices: true,
+    goals: false,
+    weeklySummary: true,
+  },
+};
 
 export const inviteLink = 'fintrack.app/convite/8x2fq';
 

@@ -1,11 +1,16 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { Card, ListRow } from '@/components/ui';
 import { isMockMode } from '@/services/api';
-import { useCurrentPerson, useFintrack, useSnapshot } from '@/store/fintrack-store';
+import {
+  useCurrentPerson,
+  useFintrack,
+  usePreferences,
+  useSnapshot,
+} from '@/store/fintrack-store';
 import { colors, spacing } from '@/theme/tokens';
 
 export default function MaisScreen() {
@@ -13,8 +18,16 @@ export default function MaisScreen() {
   const person = useCurrentPerson();
   const { signOut } = useFintrack();
   const { goals, loans } = useSnapshot();
+  const { notifications } = usePreferences();
 
   const openGoals = goals.filter((goal) => !goal.target || goal.saved < goal.target).length;
+  const activeAlerts = Object.values(notifications).filter(Boolean).length;
+
+  const confirmSignOut = () =>
+    Alert.alert('Sair da conta', 'Você precisará entrar de novo com e-mail e senha.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: signOut },
+    ]);
 
   return (
     <Screen>
@@ -48,18 +61,23 @@ export default function MaisScreen() {
         </Card>
 
         <Card style={{ paddingVertical: 4 }}>
-          <ListRow icon="pricetags-outline" title="Categorias" onPress={() => {}} />
-          <ListRow icon="repeat-outline" title="Recorrentes" onPress={() => {}} />
-          <ListRow icon="notifications-outline" title="Notificações" onPress={() => {}} last />
+          <ListRow
+            icon="notifications-outline"
+            title="Notificações"
+            subtitle={`${activeAlerts} de 4 alertas ligados`}
+            onPress={() => router.push('/perfil/notificacoes')}
+          />
+          <ListRow
+            icon="shield-checkmark-outline"
+            title="Segurança"
+            subtitle="Senha e sessões"
+            onPress={() => router.push('/perfil/seguranca')}
+            last
+          />
         </Card>
 
         <Card style={{ paddingVertical: 4 }}>
-          <ListRow
-            icon="log-out-outline"
-            title="Sair da conta"
-            onPress={signOut}
-            last
-          />
+          <ListRow icon="log-out-outline" title="Sair da conta" onPress={confirmSignOut} last />
         </Card>
 
         <View style={{ alignItems: 'center', gap: 2, marginTop: spacing.sm }}>

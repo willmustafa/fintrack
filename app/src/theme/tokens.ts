@@ -26,7 +26,9 @@ export const colors = {
   accentSoft: '#eeedfa',
 
   income: '#1f9d57',
+  incomeSoft: '#e8f6ee',
   expense: '#d64545',
+  expenseSoft: '#fdecec',
 
   placeholder: '#d9d7d1',
   placeholderStrong: '#e6e4de',

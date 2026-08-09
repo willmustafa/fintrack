@@ -25,10 +25,11 @@ src/
     transacao/nova          modal de lançamento (Nova transação · V1)
     metas/                  lista + comparação de orçamentos
     financiamento/          visão geral + amortização
-    perfil/                 configurações + convite
-  components/               Text, Card, Button, Field, Chip, Picker, gráficos, TabBar…
+    perfil/                 configurações, editar perfil, notificações,
+                            segurança, compartilhados e convite
+  components/               Text, Card, Button, Field, Chip, Picker, ActionSheet, gráficos, TabBar…
   data/seed.ts              dados de exemplo (mesmos números do board)
-  lib/                      formatação pt-BR e cálculos financeiros (puros)
+  lib/                      formatação pt-BR, validação e cálculos financeiros (puros)
   services/api.ts           acesso a dados — ponto de troca para o backend Go
   store/fintrack-store.tsx  sessão + snapshot em memória
   theme/tokens.ts           cores, espaçamentos, tipografia extraídos do board
@@ -46,7 +47,7 @@ src/
 | Investimentos   | V1 (blocos por classe) + gráfico de evolução da V2                        |
 | Metas           | V1 (cards com progresso) + tela de comparação de orçamentos               |
 | Financiamento   | Visão geral e Amortização, com rateio entre Ana e Marcelo                 |
-| Perfil          | Configurações + modal de convite                                          |
+| Perfil          | Configurações + modal de convite, com as subtelas de edição, notificações, segurança e compartilhamento |
 | Cartões         | **Não existe no board** (só na barra de navegação) — montada com os mesmos componentes |
 
 ## Conectando ao backend Go
@@ -65,9 +66,22 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | ------ | ----------------------- | ----------------------------------------------------- |
 | POST   | `/auth/login`           | `Session`                                             |
 | POST   | `/auth/signup`          | `Session`                                             |
-| GET    | `/snapshot`             | `Snapshot` (contas, transações, investimentos, metas, financiamentos, convites) |
+| GET    | `/snapshot`             | `Snapshot` (contas, transações, investimentos, metas, financiamentos, convites, preferências) |
 | POST   | `/transactions`         | `Transaction`                                         |
 | POST   | `/goals/:id/quote`      | `Goal`                                                |
+| PATCH  | `/me`                   | `Person`                                              |
+| POST   | `/me/password`          | `204`                                                 |
+| PUT    | `/me/preferences`       | `Preferences`                                         |
+| PATCH  | `/members/:id`          | `Person`                                              |
+| DELETE | `/members/:id`          | `204`                                                 |
+| PUT    | `/accounts/:id/sharing` | `Account`                                             |
 | POST   | `/invites`              | `Invite`                                              |
+| POST   | `/invites/:id/resend`   | `Invite`                                              |
+| DELETE | `/invites/:id`          | `204`                                                 |
 
 Valores monetários trafegam como número em reais (ex.: `156.30`) e datas como `YYYY-MM-DD`.
+Respostas de erro devolvem `{ "message": "..." }` em pt-BR — a mensagem vai direto para a tela.
+
+O levantamento do que ainda falta para alguém criar uma conta de verdade (verificação de e-mail,
+persistência de sessão, deep link de convite, o bloqueio do tipo `OwnerId`) está em
+[`docs/cadastro.md`](docs/cadastro.md).

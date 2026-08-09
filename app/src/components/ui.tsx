@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  Switch,
   TextInput,
   View,
   type StyleProp,
@@ -120,9 +122,15 @@ export function Button({
 type FieldProps = TextInputProps & {
   label?: string;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
+  /** Mensagem de validação — pinta a borda de vermelho */
+  error?: string;
+  /** Texto auxiliar exibido abaixo do campo quando não há erro */
+  hint?: string;
+  /** Ação à direita do campo (ex.: mostrar/ocultar senha) */
+  right?: React.ReactNode;
 };
 
-export function Field({ label, icon, style, ...rest }: FieldProps) {
+export function Field({ label, icon, error, hint, right, style, ...rest }: FieldProps) {
   return (
     <View style={{ gap: 6 }}>
       {label ? (
@@ -136,7 +144,7 @@ export function Field({ label, icon, style, ...rest }: FieldProps) {
           alignItems: 'center',
           gap: spacing.sm,
           borderWidth: 1,
-          borderColor: colors.borderStrong,
+          borderColor: error ? colors.expense : colors.borderStrong,
           borderRadius: radius.md,
           paddingHorizontal: spacing.md,
         }}>
@@ -155,8 +163,45 @@ export function Field({ label, icon, style, ...rest }: FieldProps) {
             style,
           ]}
         />
+        {right}
       </View>
+      {error ? (
+        <Text size="caption" color={colors.expense}>
+          {error}
+        </Text>
+      ) : hint ? (
+        <Text size="caption" color={colors.textMuted}>
+          {hint}
+        </Text>
+      ) : null}
     </View>
+  );
+}
+
+/** Campo de senha com botão de mostrar/ocultar. */
+export function PasswordField({ ...rest }: FieldProps) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <Field
+      {...rest}
+      icon={rest.icon ?? 'lock-closed-outline'}
+      secureTextEntry={!visible}
+      autoCapitalize="none"
+      autoCorrect={false}
+      right={
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'}
+          hitSlop={10}
+          onPress={() => setVisible((current) => !current)}>
+          <Ionicons
+            name={visible ? 'eye-off-outline' : 'eye-outline'}
+            size={18}
+            color={colors.textDisabled}
+          />
+        </Pressable>
+      }
+    />
   );
 }
 
@@ -340,6 +385,93 @@ export function ListRow({ title, subtitle, value, onPress, icon, last, right }: 
         ) : null)}
       {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} /> : null}
     </Pressable>
+  );
+}
+
+type SwitchRowProps = {
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+  last?: boolean;
+};
+
+/** Linha de preferência com interruptor — usada em Notificações e Segurança. */
+export function SwitchRow({
+  title,
+  subtitle,
+  value,
+  onValueChange,
+  disabled,
+  last,
+}: SwitchRowProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+        paddingVertical: 14,
+        borderBottomWidth: last ? 0 : 1,
+        borderBottomColor: colors.divider,
+        opacity: disabled ? 0.5 : 1,
+      }}>
+      <View style={{ flex: 1 }}>
+        <Text weight="semibold" size="small">
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text size="caption" color={colors.textSecondary} style={{ marginTop: 2, lineHeight: 17 }}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+        trackColor={{ false: colors.track, true: colors.accent }}
+        thumbColor={colors.white}
+        ios_backgroundColor={colors.track}
+      />
+    </View>
+  );
+}
+
+type NoticeProps = {
+  message: string;
+  tone?: 'info' | 'error' | 'success';
+};
+
+/** Faixa de feedback usada acima dos formulários de configuração. */
+export function Notice({ message, tone = 'info' }: NoticeProps) {
+  const palette = {
+    info: { bg: colors.accentSoft, fg: colors.accent, icon: 'information-circle-outline' },
+    error: { bg: colors.expenseSoft, fg: colors.expense, icon: 'alert-circle-outline' },
+    success: { bg: colors.incomeSoft, fg: colors.income, icon: 'checkmark-circle-outline' },
+  }[tone];
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: spacing.sm,
+        backgroundColor: palette.bg,
+        borderRadius: radius.md,
+        padding: spacing.md,
+      }}>
+      <Ionicons
+        name={palette.icon as React.ComponentProps<typeof Ionicons>['name']}
+        size={16}
+        color={palette.fg}
+        style={{ marginTop: 1 }}
+      />
+      <Text size="caption" color={palette.fg} style={{ flex: 1, lineHeight: 17 }}>
+        {message}
+      </Text>
+    </View>
   );
 }
 

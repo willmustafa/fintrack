@@ -14,7 +14,10 @@ import type {
   Investment,
   Invite,
   Loan,
+  MemberAccess,
   Person,
+  Preferences,
+  ProfileInput,
   Session,
   Transaction,
 } from '@/types';
@@ -27,16 +30,35 @@ export const isMockMode = API_BASE_URL.length === 0;
 const latency = <T>(value: T, ms = 220): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
+/** Erro de negócio devolvido pela API (mensagem já pronta para a tela). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   });
   if (!response.ok) {
-    throw new Error(`${response.status} ${response.statusText} em ${path}`);
+    const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new ApiError(body?.message ?? `${response.status} ${response.statusText}`, response.status);
   }
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
+
+/**
+ * Pessoa logada enquanto o app roda com dados de exemplo. `signIn`/`signUp`
+ * atualizam esta referência para que `updateProfile` tenha o que alterar.
+ */
+let mockPerson: Person = seed.currentPerson;
 
 export type Snapshot = {
   people: Person[];
@@ -46,13 +68,14 @@ export type Snapshot = {
   goals: Goal[];
   loans: Loan[];
   invites: Invite[];
+  preferences: Preferences;
 };
 
 export const api = {
   async signIn(email: string, _password: string): Promise<Session> {
     if (isMockMode) {
-      const person = seed.people.find((p) => p.email === email) ?? seed.currentPerson;
-      return latency({ person, token: 'mock-token' });
+      mockPerson = seed.people.find((p) => p.email === email) ?? seed.currentPerson;
+      return latency({ person: mockPerson, token: 'mock-token' });
     }
     return request<Session>('/auth/login', {
       method: 'POST',
@@ -62,14 +85,14 @@ export const api = {
 
   async signUp(name: string, email: string, _password: string): Promise<Session> {
     if (isMockMode) {
-      const person: Person = {
+      mockPerson = {
         id: 'ana',
         name,
         initial: name.trim().charAt(0).toUpperCase() || 'A',
         email,
         access: 'total',
       };
-      return latency({ person, token: 'mock-token' });
+      return latency({ person: mockPerson, token: 'mock-token' });
     }
     return request<Session>('/auth/signup', {
       method: 'POST',
@@ -87,9 +110,79 @@ export const api = {
         goals: seed.goals,
         loans: seed.loans,
         invites: seed.invites,
+        preferences: seed.preferences,
       });
     }
     return request<Snapshot>('/snapshot');
+  },
+
+  async updateProfile(input: ProfileInput): Promise<Person> {
+    if (isMockMode) {
+      mockPerson = {
+        ...mockPerson,
+        name: input.name,
+        email: input.email,
+        initial: input.name.trim().charAt(0).toUpperCase() || mockPerson.initial,
+      };
+      return latency(mockPerson, 160);
+    }
+    return request<Person>('/me', { method: 'PATCH', body: JSON.stringify(input) });
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    if (isMockMode) {
+      if (currentPassword === newPassword) {
+        throw new ApiError('A nova senha precisa ser diferente da atual.', 422);
+      }
+      await latency(null, 260);
+      return;
+    }
+    await request<void>('/me/password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  async updatePreferences(preferences: Preferences): Promise<Preferences> {
+    if (isMockMode) {
+      return latency(preferences, 140);
+    }
+    return request<Preferences>('/me/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  },
+
+  async updateMemberAccess(personId: string, access: MemberAccess): Promise<Person> {
+    if (isMockMode) {
+      const person = seed.people.find((p) => p.id === personId);
+      if (!person) throw new ApiError('Pessoa não encontrada.', 404);
+      return latency({ ...person, access }, 160);
+    }
+    return request<Person>(`/members/${personId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ access }),
+    });
+  },
+
+  async removeMember(personId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 200);
+      return;
+    }
+    await request<void>(`/members/${personId}`, { method: 'DELETE' });
+  },
+
+  async setAccountShared(accountId: string, shared: boolean): Promise<Account> {
+    if (isMockMode) {
+      const account = seed.accounts.find((item) => item.id === accountId);
+      if (!account) throw new ApiError('Conta não encontrada.', 404);
+      return latency({ ...account, ownerId: shared ? 'casal' : mockPerson.id }, 160);
+    }
+    return request<Account>(`/accounts/${accountId}/sharing`, {
+      method: 'PUT',
+      body: JSON.stringify({ shared }),
+    });
   },
 
   async createTransaction(input: Omit<Transaction, 'id'>): Promise<Transaction> {
@@ -123,11 +216,33 @@ export const api = {
 
   async sendInvite(email: string, accountIds: string[]): Promise<Invite> {
     if (isMockMode) {
-      return latency({ id: `inv${Date.now()}`, email, status: 'pendente', sentDaysAgo: 0 }, 160);
+      return latency(
+        { id: `inv${Date.now()}`, email, status: 'pendente', sentDaysAgo: 0, accountIds },
+        160,
+      );
     }
     return request<Invite>('/invites', {
       method: 'POST',
       body: JSON.stringify({ email, accountIds }),
     });
+  },
+
+  async resendInvite(inviteId: string): Promise<Invite> {
+    if (isMockMode) {
+      const invite = seed.invites.find((item) => item.id === inviteId);
+      return latency(
+        { ...(invite ?? { id: inviteId, email: '', status: 'pendente' as const }), sentDaysAgo: 0 },
+        200,
+      );
+    }
+    return request<Invite>(`/invites/${inviteId}/resend`, { method: 'POST' });
+  },
+
+  async cancelInvite(inviteId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 180);
+      return;
+    }
+    await request<void>(`/invites/${inviteId}`, { method: 'DELETE' });
   },
 };

@@ -7,13 +7,16 @@
 
 export type OwnerId = 'ana' | 'marcelo' | 'casal';
 
+/** Acesso concedido a quem recebeu o compartilhamento. */
+export type MemberAccess = 'total' | 'leitura';
+
 export type Person = {
   id: OwnerId;
   name: string;
   initial: string;
   email: string;
   /** Acesso concedido ao compartilhar contas e cartões */
-  access?: 'total' | 'leitura';
+  access?: MemberAccess;
 };
 
 export type TransactionKind = 'gasto' | 'ganho' | 'transferencia' | 'aporte';
@@ -126,9 +129,32 @@ export type Invite = {
   email: string;
   status: 'pendente' | 'aceito';
   sentDaysAgo: number;
+  /** Contas, cartões e financiamentos que o convite libera */
+  accountIds?: string[];
+};
+
+/** Preferências da pessoa logada — editadas em `perfil/notificacoes`. */
+export type NotificationPreferences = {
+  /** Cada lançamento novo feito por quem compartilha as contas */
+  transactions: boolean;
+  /** Fechamento e vencimento das faturas de cartão */
+  invoices: boolean;
+  /** Progresso de metas e estouro de orçamento */
+  goals: boolean;
+  /** Resumo de entradas e saídas toda segunda-feira */
+  weeklySummary: boolean;
+};
+
+export type Preferences = {
+  notifications: NotificationPreferences;
 };
 
 export type Session = {
   person: Person;
   token: string;
+};
+
+export type ProfileInput = {
+  name: string;
+  email: string;
 };

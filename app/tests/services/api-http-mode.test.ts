@@ -184,6 +184,43 @@ describe('PUT /accounts/:id/sharing', () => {
   });
 });
 
+describe('CRUD de contas', () => {
+  const input = {
+    name: 'Cartão Novo',
+    kind: 'cartao' as const,
+    ownerId: 'ana' as const,
+    bank: 'nubank',
+    brandColor: '#8a05be',
+    balance: 0,
+    limit: 5000,
+    invoice: 0,
+  };
+
+  it('POST /accounts cria e devolve a conta com id do servidor', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ...input, id: 'a99' }));
+    await expect(api.createAccount(input)).resolves.toMatchObject({ id: 'a99' });
+    const call = lastCall();
+    expect(call).toMatchObject({ url: `${BASE}/accounts`, method: 'POST', body: input });
+    expect(call.body).not.toHaveProperty('id');
+  });
+
+  it('PUT /accounts/:id edita a conta', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ...input, id: 'nubank' }));
+    await api.updateAccount('nubank', input);
+    expect(lastCall()).toMatchObject({
+      url: `${BASE}/accounts/nubank`,
+      method: 'PUT',
+      body: input,
+    });
+  });
+
+  it('DELETE /accounts/:id exclui e aceita 204 sem corpo', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.deleteAccount('nubank')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({ url: `${BASE}/accounts/nubank`, method: 'DELETE' });
+  });
+});
+
 describe('POST /transactions', () => {
   it('envia a transação sem id e devolve a criada pelo servidor', async () => {
     const input: Omit<Transaction, 'id'> = {
@@ -217,6 +254,32 @@ describe('POST /transactions', () => {
     const body = lastCall().body;
     expect(typeof body.amount).toBe('number');
     expect(body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('/transactions/:id', () => {
+  const input: Omit<Transaction, 'id'> = {
+    kind: 'gasto',
+    description: 'Mercado',
+    amount: 200,
+    category: 'Essenciais',
+    accountId: 'nubank',
+    date: '2024-05-24',
+    ownerId: 'casal',
+  };
+
+  it('PUT edita a transação', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ...input, id: 't2' }));
+    await expect(api.updateTransaction('t2', input)).resolves.toMatchObject({ id: 't2' });
+    const call = lastCall();
+    expect(call).toMatchObject({ url: `${BASE}/transactions/t2`, method: 'PUT', body: input });
+    expect(call.body).not.toHaveProperty('id');
+  });
+
+  it('DELETE exclui e aceita 204 sem corpo', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.deleteTransaction('t2')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({ url: `${BASE}/transactions/t2`, method: 'DELETE' });
   });
 });
 

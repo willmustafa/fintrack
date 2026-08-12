@@ -142,6 +142,7 @@ export default function TransacoesScreen() {
                 key={transaction.id}
                 transaction={transaction}
                 subtitle={`${transaction.category} · ${accountName(transaction.accountId)}`}
+                onPress={() => router.push(`/transacao/${transaction.id}`)}
                 last={index === items.length - 1}
               />
             ))}

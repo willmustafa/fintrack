@@ -95,3 +95,27 @@ test.describe('Nova transação', () => {
     await expect(page.getByText('Receita')).toBeVisible();
   });
 });
+
+test.describe('Editar transação', () => {
+  test.beforeEach(async ({ page }) => {
+    await entrar(page);
+    await irParaAba(page, 'Transações');
+  });
+
+  test('tocar na transação abre a edição preenchida e salva a alteração', async ({ page }) => {
+    await page.getByText('Netflix').click();
+    await expect(page.getByText('Editar transação')).toBeVisible();
+
+    await page.getByPlaceholder('Adicionar').fill('Netflix família');
+    await page.getByRole('button', { name: 'Salvar' }).click();
+
+    await expect(page.getByText('Netflix família')).toBeVisible();
+  });
+
+  test('a edição oferece excluir a transação', async ({ page }) => {
+    await page.getByText('Netflix').click();
+    // A confirmação em si depende do Alert nativo, que o react-native-web não
+    // implementa — aqui só garantimos que a ação está na tela.
+    await expect(page.getByRole('button', { name: 'Excluir transação' })).toBeVisible();
+  });
+});

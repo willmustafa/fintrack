@@ -6,6 +6,7 @@ import {
   formatDate,
   formatDayMonth,
   formatMonthLong,
+  formatMonthSpan,
   formatMonthShort,
   formatMonthTitle,
   formatNumber,
@@ -13,6 +14,7 @@ import {
   formatSigned,
   inputToNumber,
   monthNameOf,
+  parseMonthLong,
 } from '@/lib/format';
 
 describe('formatNumber', () => {
@@ -200,5 +202,50 @@ describe('inputToNumber', () => {
 
   it('é o inverso de centsToInput', () => {
     expect(inputToNumber(centsToInput('15630'))).toBe(156.3);
+  });
+});
+
+describe('parseMonthLong', () => {
+  it('é o inverso de formatMonthLong', () => {
+    expect(parseMonthLong('ago/2024')).toBe('2024-08');
+    expect(parseMonthLong(formatMonthLong('2044-03'))).toBe('2044-03');
+  });
+
+  it('lê todos os meses do ano', () => {
+    expect(parseMonthLong('jan/2024')).toBe('2024-01');
+    expect(parseMonthLong('dez/2024')).toBe('2024-12');
+  });
+
+  it('ignora espaços e maiúsculas', () => {
+    expect(parseMonthLong(' MAR/2044 ')).toBe('2044-03');
+  });
+
+  it('devolve null quando não reconhece', () => {
+    expect(parseMonthLong('xxx/2024')).toBeNull();
+    expect(parseMonthLong('mar/44')).toBeNull();
+    expect(parseMonthLong('qualquer coisa')).toBeNull();
+    expect(parseMonthLong('')).toBeNull();
+  });
+});
+
+describe('formatMonthSpan', () => {
+  it('menos de um ano fica só em meses', () => {
+    expect(formatMonthSpan(5)).toBe('5 meses');
+    expect(formatMonthSpan(1)).toBe('1 mês');
+  });
+
+  it('ano cheio não mostra os meses', () => {
+    expect(formatMonthSpan(12)).toBe('1 ano');
+    expect(formatMonthSpan(24)).toBe('2 anos');
+  });
+
+  it('combina anos e meses', () => {
+    expect(formatMonthSpan(238)).toBe('19 anos e 10 meses');
+    expect(formatMonthSpan(13)).toBe('1 ano e 1 mês');
+  });
+
+  it('zero ou negativo é quitado', () => {
+    expect(formatMonthSpan(0)).toBe('quitado');
+    expect(formatMonthSpan(-3)).toBe('quitado');
   });
 });

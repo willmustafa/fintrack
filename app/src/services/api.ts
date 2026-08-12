@@ -185,6 +185,34 @@ export const api = {
     });
   },
 
+  async createAccount(input: Omit<Account, 'id'>): Promise<Account> {
+    if (isMockMode) {
+      return latency({ ...input, id: `a${Date.now()}` }, 160);
+    }
+    return request<Account>('/accounts', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async updateAccount(accountId: string, input: Omit<Account, 'id'>): Promise<Account> {
+    if (isMockMode) {
+      return latency({ ...input, id: accountId }, 160);
+    }
+    return request<Account>(`/accounts/${accountId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async deleteAccount(accountId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 160);
+      return;
+    }
+    await request<void>(`/accounts/${accountId}`, { method: 'DELETE' });
+  },
+
   async createTransaction(input: Omit<Transaction, 'id'>): Promise<Transaction> {
     if (isMockMode) {
       return latency({ ...input, id: `t${Date.now()}` }, 120);
@@ -193,6 +221,27 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     });
+  },
+
+  async updateTransaction(
+    transactionId: string,
+    input: Omit<Transaction, 'id'>,
+  ): Promise<Transaction> {
+    if (isMockMode) {
+      return latency({ ...input, id: transactionId }, 120);
+    }
+    return request<Transaction>(`/transactions/${transactionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async deleteTransaction(transactionId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>(`/transactions/${transactionId}`, { method: 'DELETE' });
   },
 
   async chooseGoalQuote(goalId: string, quoteId: string): Promise<Goal> {

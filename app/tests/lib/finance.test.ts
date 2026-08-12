@@ -1,23 +1,28 @@
 import * as seed from '@/data/seed';
 import {
   REFERENCE_MONTH,
+  applyTransaction,
   budgetSlices,
   budgetTargets,
   consolidatedBalance,
   goalProgress,
+  goalsClosestToDone,
   groupByDay,
   investmentTotals,
   investmentYield,
   isInMonth,
+  loanPaidRatio,
   monthExpense,
   monthIncome,
   monthOutflow,
+  monthsBetween,
+  monthsToPayoff,
   openInvoices,
   runningBalances,
   signOf,
   signedAmount,
 } from '@/lib/finance';
-import type { Account, Goal, Investment, Transaction } from '@/types';
+import type { Account, Goal, Investment, Loan, Transaction } from '@/types';
 
 const tx = (over: Partial<Transaction> = {}): Transaction => ({
   id: 't',
@@ -102,6 +107,71 @@ describe('openInvoices', () => {
 
   it('lista sem cartões dá zero', () => {
     expect(openInvoices([account()])).toBe(0);
+  });
+});
+
+describe('applyTransaction', () => {
+  const corrente = account({ id: 'corrente', balance: 1000 });
+  const poupanca = account({ id: 'poupanca', kind: 'poupanca', balance: 500 });
+  const cartao = account({ id: 'nubank', kind: 'cartao', balance: 0, invoice: 800 });
+  const contas = [corrente, poupanca, cartao];
+
+  const saldo = (lista: Account[], id: string) => lista.find((a) => a.id === id)!.balance;
+  const fatura = (lista: Account[], id: string) => lista.find((a) => a.id === id)!.invoice;
+
+  it('gasto desconta do saldo e desfazer devolve', () => {
+    const depois = applyTransaction(contas, tx({ amount: 250 }), 1);
+    expect(saldo(depois, 'corrente')).toBe(750);
+    expect(saldo(applyTransaction(depois, tx({ amount: 250 }), -1), 'corrente')).toBe(1000);
+  });
+
+  it('ganho soma no saldo', () => {
+    expect(saldo(applyTransaction(contas, tx({ kind: 'ganho', amount: 200 }), 1), 'corrente')).toBe(
+      1200,
+    );
+  });
+
+  it('aporte sai do saldo', () => {
+    expect(saldo(applyTransaction(contas, tx({ kind: 'aporte', amount: 300 }), 1), 'corrente')).toBe(
+      700,
+    );
+  });
+
+  it('gasto no cartão mexe na fatura, não no saldo', () => {
+    const depois = applyTransaction(contas, tx({ accountId: 'nubank', amount: 150 }), 1);
+    expect(fatura(depois, 'nubank')).toBe(950);
+    expect(saldo(depois, 'nubank')).toBe(0);
+  });
+
+  it('desfazer um gasto de cartão abate a fatura', () => {
+    const lancamento = tx({ accountId: 'nubank', amount: 150 });
+    expect(fatura(applyTransaction(contas, lancamento, -1), 'nubank')).toBe(650);
+  });
+
+  it('ganho lançado num cartão não altera nada', () => {
+    const depois = applyTransaction(contas, tx({ kind: 'ganho', accountId: 'nubank' }), 1);
+    expect(fatura(depois, 'nubank')).toBe(800);
+    expect(saldo(depois, 'nubank')).toBe(0);
+  });
+
+  it('transferência tira da origem e põe no destino', () => {
+    const depois = applyTransaction(
+      contas,
+      tx({ kind: 'transferencia', amount: 200, toAccountId: 'poupanca' }),
+      1,
+    );
+    expect(saldo(depois, 'corrente')).toBe(800);
+    expect(saldo(depois, 'poupanca')).toBe(700);
+  });
+
+  it('não toca nas contas fora do lançamento', () => {
+    const depois = applyTransaction(contas, tx(), 1);
+    expect(saldo(depois, 'poupanca')).toBe(500);
+  });
+
+  it('cartão sem fatura parte do zero', () => {
+    const semFatura = [account({ id: 'novo', kind: 'cartao' })];
+    expect(fatura(applyTransaction(semFatura, tx({ accountId: 'novo' }), 1), 'novo')).toBe(100);
   });
 });
 
@@ -352,5 +422,84 @@ describe('runningBalances', () => {
 
   it('cobre todas as transações do seed', () => {
     expect(runningBalances(seed.transactions, 4050).size).toBe(seed.transactions.length);
+  });
+});
+
+describe('goalsClosestToDone', () => {
+  const goal = (over: Partial<Goal> = {}): Goal => ({ id: 'g', name: 'Meta', saved: 0, ...over });
+
+  it('ordena da mais adiantada para a menos', () => {
+    const metas = [
+      goal({ id: 'a', target: 100, saved: 10 }),
+      goal({ id: 'b', target: 100, saved: 90 }),
+      goal({ id: 'c', target: 100, saved: 50 }),
+    ];
+    expect(goalsClosestToDone(metas).map((m) => m.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('devolve no máximo três por padrão', () => {
+    const metas = Array.from({ length: 6 }, (_, i) =>
+      goal({ id: `g${i}`, target: 100, saved: i * 10 }),
+    );
+    expect(goalsClosestToDone(metas)).toHaveLength(3);
+  });
+
+  it('respeita um limite diferente', () => {
+    const metas = [goal({ id: 'a', target: 100, saved: 10 }), goal({ id: 'b', target: 100, saved: 90 })];
+    expect(goalsClosestToDone(metas, 1).map((m) => m.id)).toEqual(['b']);
+  });
+
+  it('ignora metas sem alvo e as já concluídas', () => {
+    const metas = [
+      goal({ id: 'sem-alvo', saved: 500 }),
+      goal({ id: 'zerada', target: 0, saved: 0 }),
+      goal({ id: 'fechada', target: 100, saved: 100 }),
+      goal({ id: 'aberta', target: 100, saved: 20 }),
+    ];
+    expect(goalsClosestToDone(metas).map((m) => m.id)).toEqual(['aberta']);
+  });
+
+  it('no seed traz as três com alvo em andamento', () => {
+    expect(goalsClosestToDone(seed.goals).map((m) => m.name)).toEqual([
+      'Viagem Japão',
+      'Reserva de emergência',
+      'Notebook',
+    ]);
+  });
+
+  it('lista vazia devolve vazio', () => {
+    expect(goalsClosestToDone([])).toEqual([]);
+  });
+});
+
+describe('meses até quitar', () => {
+  const loan = (over: Partial<Loan> = {}): Loan => ({ ...seed.loans[0], ...over });
+
+  it('monthsBetween conta os meses entre dois YYYY-MM', () => {
+    expect(monthsBetween('2024-05', '2024-05')).toBe(0);
+    expect(monthsBetween('2024-05', '2024-08')).toBe(3);
+    expect(monthsBetween('2024-05', '2025-05')).toBe(12);
+    expect(monthsBetween('2024-05', '2044-03')).toBe(238);
+  });
+
+  it('monthsBetween não fica negativo quando a data já passou', () => {
+    expect(monthsBetween('2024-05', '2023-01')).toBe(0);
+  });
+
+  it('monthsToPayoff lê o payoffDate em pt-BR', () => {
+    expect(monthsToPayoff(seed.loans[0])).toBe(238);
+  });
+
+  it('monthsToPayoff aceita outro mês de referência', () => {
+    expect(monthsToPayoff(seed.loans[0], '2044-01')).toBe(2);
+  });
+
+  it('payoffDate irreconhecível vira zero', () => {
+    expect(monthsToPayoff(loan({ payoffDate: 'qualquer coisa' }))).toBe(0);
+  });
+
+  it('loanPaidRatio é a fatia já amortizada', () => {
+    expect(loanPaidRatio(seed.loans[0])).toBeCloseTo(0.3058, 4);
+    expect(loanPaidRatio(loan({ total: 0, balance: 0 }))).toBe(0);
   });
 });

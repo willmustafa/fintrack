@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,8 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/avatar';
 import { Picker, type PickerOption } from '@/components/picker';
 import { Text } from '@/components/text';
-import { Notice, Segmented } from '@/components/ui';
-import { centsToInput, formatDate, inputToNumber } from '@/lib/format';
+import { Button, Notice, Segmented } from '@/components/ui';
+import { centsToInput, formatDate, formatNumber, inputToNumber } from '@/lib/format';
 import { useCurrentPerson, useFintrack, useSnapshot } from '@/store/fintrack-store';
 import { colors, fonts, radius, spacing } from '@/theme/tokens';
 import type { OwnerId, TransactionKind } from '@/types';
@@ -53,22 +54,35 @@ function recentDates(reference: string): PickerOption<string>[] {
   });
 }
 
-/** Nova transação · V1: cabeçalho com Salvar, tipo em abas e campos em lista. */
-export default function NovaTransacaoScreen() {
+/**
+ * Nova transação · V1: cabeçalho com Salvar, tipo em abas e campos em lista.
+ *
+ * A rota `transacao/nova` abre o formulário vazio; qualquer outro id edita o
+ * lançamento correspondente, que também pode ser excluído por aqui.
+ */
+export default function TransacaoFormScreen() {
   const router = useRouter();
   const person = useCurrentPerson();
-  const { accounts } = useSnapshot();
-  const { addTransaction } = useFintrack();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { accounts, transactions } = useSnapshot();
+  const { addTransaction, editTransaction, removeTransaction } = useFintrack();
 
-  const [kind, setKind] = useState<TransactionKind>('gasto');
-  const [amount, setAmount] = useState('0,00');
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? 'corrente');
-  const [toAccountId, setToAccountId] = useState(accounts[1]?.id ?? 'poupanca');
-  const [category, setCategory] = useState('Essenciais');
-  const [date, setDate] = useState(TODAY);
-  const [description, setDescription] = useState('');
-  const [ownerId, setOwnerId] = useState<OwnerId>((person?.id as OwnerId) ?? 'ana');
-  const [recurring, setRecurring] = useState(false);
+  const editing = transactions.find((transaction) => transaction.id === id);
+  const isNew = !editing;
+
+  const [kind, setKind] = useState<TransactionKind>(editing?.kind ?? 'gasto');
+  const [amount, setAmount] = useState(editing ? formatNumber(editing.amount, 2) : '0,00');
+  const [accountId, setAccountId] = useState(editing?.accountId ?? accounts[0]?.id ?? 'corrente');
+  const [toAccountId, setToAccountId] = useState(
+    editing?.toAccountId ?? accounts[1]?.id ?? 'poupanca',
+  );
+  const [category, setCategory] = useState(editing?.category ?? 'Essenciais');
+  const [date, setDate] = useState(editing?.date ?? TODAY);
+  const [description, setDescription] = useState(editing?.description ?? '');
+  const [ownerId, setOwnerId] = useState<OwnerId>(
+    editing?.ownerId ?? (person?.id as OwnerId) ?? 'ana',
+  );
+  const [recurring, setRecurring] = useState(editing?.recurring ?? false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openPicker, setOpenPicker] = useState<
@@ -90,7 +104,15 @@ export default function NovaTransacaoScreen() {
     [kind],
   );
 
-  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? id;
+  /** A data original pode ser mais antiga que a janela de dias recentes. */
+  const dateOptions = useMemo(() => {
+    const recent = recentDates(TODAY);
+    if (!editing || recent.some((option) => option.value === editing.date)) return recent;
+    return [{ value: editing.date, label: formatDate(editing.date) }, ...recent];
+  }, [editing]);
+
+  const accountName = (accountKey: string) =>
+    accounts.find((a) => a.id === accountKey)?.name ?? accountKey;
   const value = inputToNumber(amount);
   const canSave = value > 0 && !saving;
 
@@ -103,18 +125,23 @@ export default function NovaTransacaoScreen() {
     if (!canSave) return;
     setSaving(true);
     setError(null);
+    const input = {
+      kind,
+      amount: value,
+      category,
+      accountId,
+      toAccountId: kind === 'transferencia' ? toAccountId : undefined,
+      date,
+      ownerId,
+      description: description.trim() || category,
+      recurring,
+    };
     try {
-      await addTransaction({
-        kind,
-        amount: value,
-        category,
-        accountId,
-        toAccountId: kind === 'transferencia' ? toAccountId : undefined,
-        date,
-        ownerId,
-        description: description.trim() || category,
-        recurring,
-      });
+      if (editing) {
+        await editTransaction(editing.id, input);
+      } else {
+        await addTransaction(input);
+      }
       router.back();
     } catch (caught) {
       // A recusa vem do backend (saldo, limite, validação) — a tela fica aberta
@@ -125,6 +152,31 @@ export default function NovaTransacaoScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const onDelete = () => {
+    if (!editing) return;
+    Alert.alert(
+      'Excluir transação?',
+      `"${editing.description}" será removida e o saldo da conta volta ao que era.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeTransaction(editing.id);
+              router.back();
+            } catch (caught) {
+              setError(
+                caught instanceof Error ? caught.message : 'Não foi possível excluir a transação.',
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -141,7 +193,7 @@ export default function NovaTransacaoScreen() {
           <Ionicons name="close" size={24} color={colors.textBody} />
         </Pressable>
         <Text weight="extrabold" size="title">
-          Nova transação
+          {isNew ? 'Nova transação' : 'Editar transação'}
         </Text>
         <Pressable accessibilityLabel="Salvar" hitSlop={12} onPress={onSave} disabled={!canSave}>
           <Text weight="bold" size="small" color={canSave ? colors.accent : colors.textDisabled}>
@@ -259,6 +311,16 @@ export default function NovaTransacaoScreen() {
               />
             </View>
           </View>
+
+          {editing ? (
+            <Button
+              title="Excluir transação"
+              variant="ghost"
+              icon="trash-outline"
+              onPress={onDelete}
+              style={{ borderWidth: 1, borderColor: colors.expenseSoft }}
+            />
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -289,7 +351,7 @@ export default function NovaTransacaoScreen() {
       <Picker
         visible={openPicker === 'data'}
         title="Data"
-        options={recentDates(TODAY)}
+        options={dateOptions}
         value={date}
         onSelect={setDate}
         onClose={() => setOpenPicker(null)}

@@ -9,8 +9,10 @@ import {
   type ReactNode,
 } from 'react';
 
+import { applyTransaction } from '@/lib/finance';
 import { api, type Snapshot } from '@/services/api';
 import type {
+  Account,
   Goal,
   Invite,
   MemberAccess,
@@ -33,6 +35,8 @@ type Store = State & {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => void;
   addTransaction: (input: Omit<Transaction, 'id'>) => Promise<Transaction>;
+  editTransaction: (transactionId: string, input: Omit<Transaction, 'id'>) => Promise<Transaction>;
+  removeTransaction: (transactionId: string) => Promise<void>;
   chooseGoalQuote: (goalId: string, quoteId: string) => Promise<Goal>;
   sendInvite: (email: string, accountIds: string[]) => Promise<Invite>;
   /** Perfil e configurações */
@@ -42,6 +46,10 @@ type Store = State & {
   updateMemberAccess: (personId: string, access: MemberAccess) => Promise<void>;
   removeMember: (personId: string) => Promise<void>;
   setAccountShared: (accountId: string, shared: boolean) => Promise<void>;
+  /** Contas e cartões: criar, editar e excluir */
+  addAccount: (input: Omit<Account, 'id'>) => Promise<Account>;
+  saveAccount: (accountId: string, input: Omit<Account, 'id'>) => Promise<Account>;
+  removeAccount: (accountId: string) => Promise<void>;
   resendInvite: (inviteId: string) => Promise<void>;
   cancelInvite: (inviteId: string) => Promise<void>;
 };
@@ -118,26 +126,57 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
             snapshot: {
               ...prev.snapshot,
               transactions: [created, ...prev.snapshot.transactions],
-              accounts: prev.snapshot.accounts.map((account) => {
-                // Destino da transferência recebe o valor
-                if (account.id === created.toAccountId) {
-                  return { ...account, balance: account.balance + created.amount };
-                }
-                if (account.id !== created.accountId) return account;
-                // Gasto no cartão vai para a fatura, não para um saldo
-                if (account.kind === 'cartao') {
-                  return created.kind === 'gasto'
-                    ? { ...account, invoice: (account.invoice ?? 0) + created.amount }
-                    : account;
-                }
-                const delta = created.kind === 'ganho' ? created.amount : -created.amount;
-                return { ...account, balance: account.balance + delta };
-              }),
+              accounts: applyTransaction(prev.snapshot.accounts, created, 1),
             },
           }
         : prev,
     );
     return created;
+  }, []);
+
+  const editTransaction = useCallback(
+    async (transactionId: string, input: Omit<Transaction, 'id'>) => {
+      const updated = await api.updateTransaction(transactionId, input);
+      setState((prev) => {
+        if (!prev.snapshot) return prev;
+        const previous = prev.snapshot.transactions.find((t) => t.id === transactionId);
+        // Desfaz o efeito do lançamento antigo antes de aplicar o novo: a conta,
+        // o valor ou até o tipo podem ter mudado na edição.
+        const reverted = previous
+          ? applyTransaction(prev.snapshot.accounts, previous, -1)
+          : prev.snapshot.accounts;
+        return {
+          ...prev,
+          snapshot: {
+            ...prev.snapshot,
+            transactions: prev.snapshot.transactions.map((t) =>
+              t.id === transactionId ? updated : t,
+            ),
+            accounts: applyTransaction(reverted, updated, 1),
+          },
+        };
+      });
+      return updated;
+    },
+    [],
+  );
+
+  const removeTransaction = useCallback(async (transactionId: string) => {
+    await api.deleteTransaction(transactionId);
+    setState((prev) => {
+      if (!prev.snapshot) return prev;
+      const previous = prev.snapshot.transactions.find((t) => t.id === transactionId);
+      return {
+        ...prev,
+        snapshot: {
+          ...prev.snapshot,
+          transactions: prev.snapshot.transactions.filter((t) => t.id !== transactionId),
+          accounts: previous
+            ? applyTransaction(prev.snapshot.accounts, previous, -1)
+            : prev.snapshot.accounts,
+        },
+      };
+    });
   }, []);
 
   const chooseGoalQuote = useCallback(async (goalId: string, quoteId: string) => {
@@ -239,6 +278,41 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
     [patchSnapshot],
   );
 
+  const addAccount = useCallback(
+    async (input: Omit<Account, 'id'>) => {
+      const account = await api.createAccount(input);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: [...snapshot.accounts, account],
+      }));
+      return account;
+    },
+    [patchSnapshot],
+  );
+
+  const saveAccount = useCallback(
+    async (accountId: string, input: Omit<Account, 'id'>) => {
+      const account = await api.updateAccount(accountId, input);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: snapshot.accounts.map((item) => (item.id === account.id ? account : item)),
+      }));
+      return account;
+    },
+    [patchSnapshot],
+  );
+
+  const removeAccount = useCallback(
+    async (accountId: string) => {
+      await api.deleteAccount(accountId);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: snapshot.accounts.filter((item) => item.id !== accountId),
+      }));
+    },
+    [patchSnapshot],
+  );
+
   const resendInvite = useCallback(
     async (inviteId: string) => {
       const invite = await api.resendInvite(inviteId);
@@ -270,6 +344,8 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       addTransaction,
+      editTransaction,
+      removeTransaction,
       chooseGoalQuote,
       sendInvite,
       updateProfile,
@@ -278,6 +354,9 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       updateMemberAccess,
       removeMember,
       setAccountShared,
+      addAccount,
+      saveAccount,
+      removeAccount,
       resendInvite,
       cancelInvite,
     }),
@@ -287,6 +366,8 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       addTransaction,
+      editTransaction,
+      removeTransaction,
       chooseGoalQuote,
       sendInvite,
       updateProfile,
@@ -295,6 +376,9 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       updateMemberAccess,
       removeMember,
       setAccountShared,
+      addAccount,
+      saveAccount,
+      removeAccount,
       resendInvite,
       cancelInvite,
     ],

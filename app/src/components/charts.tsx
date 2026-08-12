@@ -87,6 +87,74 @@ export function PairedBars({
   );
 }
 
+/**
+ * Sobra por período: uma barra por semana, acima ou abaixo da linha do zero.
+ *
+ * Substitui o par receita/gasto porque a pergunta real é "sobrou ou faltou?" —
+ * aqui isso se lê na posição da barra, e não na subtração mental de duas barras.
+ * A posição também é o que carrega a informação: verde e vermelho são
+ * praticamente iguais em daltonismo vermelho-verde, então a cor só reforça.
+ */
+export function NetBars({
+  data,
+  height = 76,
+}: {
+  data: { label: string; net: number }[];
+  height?: number;
+}) {
+  const max = Math.max(...data.map((item) => Math.abs(item.net)), 1);
+  const half = height / 2;
+  // 3px deixa a barra visível mesmo quando a semana fecha quase no zero.
+  const lengthOf = (net: number) => Math.max((Math.abs(net) / max) * (half - 4), 3);
+
+  return (
+    <View>
+      <View style={{ flexDirection: 'row', gap: 10, height }}>
+        {data.map((item) => {
+          const positive = item.net >= 0;
+          const bar = {
+            width: 14,
+            height: lengthOf(item.net),
+            backgroundColor: positive ? colors.income : colors.expense,
+          };
+          return (
+            <View key={item.label} style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ height: half, justifyContent: 'flex-end' }}>
+                {positive ? (
+                  <View style={[bar, { borderTopLeftRadius: 4, borderTopRightRadius: 4 }]} />
+                ) : null}
+              </View>
+              <View style={{ height: half }}>
+                {positive ? null : (
+                  <View style={[bar, { borderBottomLeftRadius: 4, borderBottomRightRadius: 4 }]} />
+                )}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+      {/* Linha do zero: neutra, para as barras se lerem como acima/abaixo dela */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: half,
+          height: 1,
+          backgroundColor: colors.borderStrong,
+        }}
+      />
+      <View style={{ flexDirection: 'row', marginTop: 7, gap: 10 }}>
+        {data.map((item) => (
+          <Text key={item.label} size="micro" color={colors.textMuted} align="center" style={{ flex: 1 }}>
+            {item.label}
+          </Text>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 type DonutSlice = { value: number; color: string };
 
 /** Rosca do 50/30/20 com rótulo central. */

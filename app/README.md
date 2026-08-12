@@ -63,7 +63,8 @@ src/
   app/                      rotas (expo-router)
     (auth)/login|cadastro   Auth · V2 do board (hero + bottom-sheet)
     (tabs)/                 Início, Transações, Cartões, Investimentos, Mais
-    transacao/nova          modal de lançamento (Nova transação · V1)
+    transacao/[id]          modal de lançamento — `nova` cria, um id edita/exclui
+    conta/[id]              modal de conta/cartão — `nova` cria, um id edita/exclui
     metas/                  lista + comparação de orçamentos
     financiamento/          visão geral + amortização
     perfil/                 configurações, editar perfil, notificações,
@@ -82,14 +83,14 @@ src/
 | Tela            | Variação implementada                                                    |
 | --------------- | ------------------------------------------------------------------------ |
 | Auth            | V2 — hero roxo + bottom-sheet; cadastro em tela própria                   |
-| Início          | V1 — saldo consolidado, 50/30/20, receitas × gastos, atalhos              |
+| Início          | Saldo consolidado, números do mês no topo, sobra por semana, orçamento 50/30/20, metas quase concluídas e prazo do financiamento |
 | Transações      | V1 — busca, filtros e agrupamento por dia, com o resumo entradas/saídas da V2 |
-| Nova transação  | V1 — tipo em abas, valor, conta, categoria, data, pago por, recorrência   |
+| Nova transação  | V1 — tipo em abas, valor, conta, categoria, data, pago por, recorrência; a mesma tela edita e exclui um lançamento existente |
 | Investimentos   | V1 (blocos por classe) + gráfico de evolução da V2                        |
 | Metas           | V1 (cards com progresso) + tela de comparação de orçamentos               |
 | Financiamento   | Visão geral e Amortização, com rateio entre Ana e Marcelo                 |
 | Perfil          | Configurações + modal de convite, com as subtelas de edição, notificações, segurança e compartilhamento |
-| Cartões         | **Não existe no board** (só na barra de navegação) — montada com os mesmos componentes |
+| Cartões e contas | **Não existe no board** — lista contas e cartões com criar/editar/excluir, seletor de banco brasileiro e "conta conjunta"; o cartão junta fatura, limite e datas num bloco só (os lançamentos ficam no extrato) |
 
 ## Conectando ao backend Go
 
@@ -109,6 +110,8 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | POST   | `/auth/signup`          | `Session`                                             |
 | GET    | `/snapshot`             | `Snapshot` (contas, transações, investimentos, metas, financiamentos, convites, preferências) |
 | POST   | `/transactions`         | `Transaction`                                         |
+| PUT    | `/transactions/:id`     | `Transaction`                                         |
+| DELETE | `/transactions/:id`     | `204`                                                 |
 | POST   | `/goals/:id/quote`      | `Goal`                                                |
 | PATCH  | `/me`                   | `Person`                                              |
 | POST   | `/me/password`          | `204`                                                 |
@@ -116,6 +119,9 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | PATCH  | `/members/:id`          | `Person`                                              |
 | DELETE | `/members/:id`          | `204`                                                 |
 | PUT    | `/accounts/:id/sharing` | `Account`                                             |
+| POST   | `/accounts`             | `Account`                                             |
+| PUT    | `/accounts/:id`         | `Account`                                             |
+| DELETE | `/accounts/:id`         | `204`                                                 |
 | POST   | `/invites`              | `Invite`                                              |
 | POST   | `/invites/:id/resend`   | `Invite`                                              |
 | DELETE | `/invites/:id`          | `204`                                                 |

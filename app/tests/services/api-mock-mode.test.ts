@@ -145,6 +145,32 @@ describe('membros e contas compartilhadas', () => {
   it('removeMember resolve sem erro', async () => {
     await expect(api.removeMember('marcelo')).resolves.toBeUndefined();
   });
+
+  it('createAccount devolve a conta com um id gerado', async () => {
+    const created = await api.createAccount({
+      name: 'Conta nova',
+      kind: 'corrente',
+      ownerId: 'ana',
+      balance: 100,
+    });
+    expect(created).toMatchObject({ name: 'Conta nova', kind: 'corrente', balance: 100 });
+    expect(created.id).toMatch(/^a\d+$/);
+  });
+
+  it('updateAccount devolve o input com o id preservado', async () => {
+    const saved = await api.updateAccount('nubank', {
+      name: 'Nubank renomeado',
+      kind: 'cartao',
+      ownerId: 'casal',
+      balance: 0,
+      limit: 7000,
+    });
+    expect(saved).toMatchObject({ id: 'nubank', name: 'Nubank renomeado', limit: 7000 });
+  });
+
+  it('deleteAccount resolve sem erro', async () => {
+    await expect(api.deleteAccount('nubank')).resolves.toBeUndefined();
+  });
 });
 
 describe('transações', () => {
@@ -161,6 +187,23 @@ describe('transações', () => {
     const created = await api.createTransaction(input);
     expect(created).toMatchObject(input);
     expect(created.id).toMatch(/^t\d+$/);
+  });
+
+  it('updateTransaction devolve o input com o id preservado', async () => {
+    const saved = await api.updateTransaction('t2', {
+      kind: 'gasto',
+      description: 'Mercado grande',
+      amount: 200,
+      category: 'Essenciais',
+      accountId: 'nubank',
+      date: '2024-05-24',
+      ownerId: 'casal',
+    });
+    expect(saved).toMatchObject({ id: 't2', description: 'Mercado grande', amount: 200 });
+  });
+
+  it('deleteTransaction resolve sem erro', async () => {
+    await expect(api.deleteTransaction('t2')).resolves.toBeUndefined();
   });
 });
 

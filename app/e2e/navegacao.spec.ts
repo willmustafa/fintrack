@@ -25,12 +25,19 @@ test.describe('Navegação', () => {
   });
 
   test('os atalhos do painel levam às telas certas', async ({ page }) => {
-    await page.getByText('Faturas abertas').click();
+    await page.getByText('Faturas', { exact: true }).click();
     await expect(page.getByText('Total R$ 6.000')).toBeVisible();
 
     await irParaAba(page, 'Início');
-    await page.getByText('Metas em andamento').click();
-    await expect(page.getByText('Viagem Japão')).toBeVisible();
+    await page.getByText('Quase lá').click();
+    // "Sofá novo" ainda não tem alvo, então só aparece na lista completa.
+    await expect(page.getByText('Sofá novo')).toBeVisible();
+  });
+
+  test('o painel resume a sobra do mês e o prazo do financiamento', async ({ page }) => {
+    await expect(page.getByText('Sobrou no mês')).toBeVisible();
+    await expect(page.getByText('+R$ 2.620')).toBeVisible();
+    await expect(page.getByText('meses até quitar · 19 anos e 10 meses')).toBeVisible();
   });
 
   test('Mais → Metas → detalhe e volta', async ({ page }) => {

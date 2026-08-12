@@ -30,7 +30,12 @@ jest.mock('@/services/api', () => {
       updateMemberAccess: jest.fn(),
       removeMember: jest.fn(),
       setAccountShared: jest.fn(),
+      createAccount: jest.fn(),
+      updateAccount: jest.fn(),
+      deleteAccount: jest.fn(),
       createTransaction: jest.fn(),
+      updateTransaction: jest.fn(),
+      deleteTransaction: jest.fn(),
       chooseGoalQuote: jest.fn(),
       sendInvite: jest.fn(),
       resendInvite: jest.fn(),
@@ -323,6 +328,106 @@ describe('addTransaction', () => {
   });
 });
 
+describe('editTransaction e removeTransaction', () => {
+  /** Gasto de 100 na corrente e gasto de 50 no cartão, já refletidos nos saldos. */
+  const gastoConta: Transaction = {
+    id: 't1',
+    kind: 'gasto',
+    description: 'Mercado',
+    amount: 100,
+    category: 'Essenciais',
+    accountId: 'corrente',
+    date: '2024-05-20',
+    ownerId: 'ana',
+  };
+  const gastoCartao: Transaction = { ...gastoConta, id: 't2', accountId: 'nubank', amount: 50 };
+
+  /** Parte de um snapshot que já contém os dois lançamentos acima. */
+  const comLancamentos = async () => {
+    mockApi.snapshot.mockResolvedValue({
+      ...snapshotBase(),
+      transactions: [gastoConta, gastoCartao],
+    });
+    return renderLogged();
+  };
+
+  const saldo = (result: { current: { snapshot: Snapshot | null } }, id: string) =>
+    result.current.snapshot?.accounts.find((a) => a.id === id);
+
+  it('removeTransaction tira o lançamento e devolve o valor ao saldo', async () => {
+    const { result } = await comLancamentos();
+    mockApi.deleteTransaction.mockResolvedValue(undefined);
+    await act(async () => {
+      await result.current.removeTransaction('t1');
+    });
+    expect(mockApi.deleteTransaction).toHaveBeenCalledWith('t1');
+    expect(result.current.snapshot?.transactions.map((t) => t.id)).toEqual(['t2']);
+    expect(saldo(result, 'corrente')?.balance).toBe(1100);
+  });
+
+  it('excluir um gasto de cartão abate a fatura', async () => {
+    const { result } = await comLancamentos();
+    mockApi.deleteTransaction.mockResolvedValue(undefined);
+    await act(async () => {
+      await result.current.removeTransaction('t2');
+    });
+    expect(saldo(result, 'nubank')?.invoice).toBe(750);
+  });
+
+  it('removeTransaction não mexe no snapshot quando a API falha', async () => {
+    const { result } = await comLancamentos();
+    mockApi.deleteTransaction.mockRejectedValue(new Error('Não foi possível excluir.'));
+    await act(async () => {
+      await expect(result.current.removeTransaction('t1')).rejects.toThrow();
+    });
+    expect(result.current.snapshot?.transactions).toHaveLength(2);
+    expect(saldo(result, 'corrente')?.balance).toBe(1000);
+  });
+
+  it('editar o valor ajusta o saldo pela diferença', async () => {
+    const { result } = await comLancamentos();
+    const novo = { ...gastoConta, amount: 250 };
+    mockApi.updateTransaction.mockResolvedValue(novo);
+    await act(async () => {
+      await result.current.editTransaction('t1', novo);
+    });
+    // Desfaz os 100 antigos (1100) e aplica os 250 novos.
+    expect(saldo(result, 'corrente')?.balance).toBe(850);
+    expect(result.current.snapshot?.transactions[0].amount).toBe(250);
+  });
+
+  it('mudar a conta do lançamento move o valor entre as contas', async () => {
+    const { result } = await comLancamentos();
+    const novo = { ...gastoConta, accountId: 'poupanca' };
+    mockApi.updateTransaction.mockResolvedValue(novo);
+    await act(async () => {
+      await result.current.editTransaction('t1', novo);
+    });
+    expect(saldo(result, 'corrente')?.balance).toBe(1100);
+    expect(saldo(result, 'poupanca')?.balance).toBe(400);
+  });
+
+  it('mudar o tipo de gasto para ganho inverte o sinal', async () => {
+    const { result } = await comLancamentos();
+    const novo: Transaction = { ...gastoConta, kind: 'ganho', category: 'Receita' };
+    mockApi.updateTransaction.mockResolvedValue(novo);
+    await act(async () => {
+      await result.current.editTransaction('t1', novo);
+    });
+    expect(saldo(result, 'corrente')?.balance).toBe(1200);
+  });
+
+  it('editTransaction devolve a transação confirmada pela API', async () => {
+    const { result } = await comLancamentos();
+    mockApi.updateTransaction.mockResolvedValue({ ...gastoConta, description: 'Do servidor' });
+    let atualizada: Transaction | undefined;
+    await act(async () => {
+      atualizada = await result.current.editTransaction('t1', gastoConta);
+    });
+    expect(atualizada?.description).toBe('Do servidor');
+  });
+});
+
 describe('metas', () => {
   it('chooseGoalQuote substitui a meta no snapshot', async () => {
     const { result } = await renderLogged();
@@ -453,6 +558,59 @@ describe('membros', () => {
     });
     expect(result.current.snapshot?.accounts[0].ownerId).toBe('casal');
     expect(mockApi.setAccountShared).toHaveBeenCalledWith('corrente', true);
+  });
+});
+
+describe('contas e cartões (CRUD)', () => {
+  const nova: Omit<Account, 'id'> = {
+    name: 'Cartão Novo',
+    kind: 'cartao',
+    balance: 0,
+    ownerId: 'ana',
+    limit: 5000,
+    invoice: 0,
+  };
+
+  it('addAccount acrescenta a conta no fim da lista', async () => {
+    const { result } = await renderLogged();
+    mockApi.createAccount.mockResolvedValue({ ...nova, id: 'a1' });
+    await act(async () => {
+      await result.current.addAccount(nova);
+    });
+    expect(mockApi.createAccount).toHaveBeenCalledWith(nova);
+    expect(result.current.snapshot?.accounts).toHaveLength(4);
+    expect(result.current.snapshot?.accounts[3]).toMatchObject({ id: 'a1', name: 'Cartão Novo' });
+  });
+
+  it('saveAccount substitui a conta editada mantendo a ordem', async () => {
+    const { result } = await renderLogged();
+    mockApi.updateAccount.mockResolvedValue({ ...conta, name: 'Corrente renomeada' });
+    await act(async () => {
+      await result.current.saveAccount('corrente', { ...conta, name: 'Corrente renomeada' });
+    });
+    expect(result.current.snapshot?.accounts[0]).toMatchObject({
+      id: 'corrente',
+      name: 'Corrente renomeada',
+    });
+    expect(result.current.snapshot?.accounts).toHaveLength(3);
+  });
+
+  it('removeAccount tira a conta da lista', async () => {
+    const { result } = await renderLogged();
+    mockApi.deleteAccount.mockResolvedValue(undefined);
+    await act(async () => {
+      await result.current.removeAccount('poupanca');
+    });
+    expect(result.current.snapshot?.accounts.map((a) => a.id)).toEqual(['corrente', 'nubank']);
+  });
+
+  it('removeAccount não mexe na lista quando a API falha', async () => {
+    const { result } = await renderLogged();
+    mockApi.deleteAccount.mockRejectedValue(new Error('Não foi possível excluir.'));
+    await act(async () => {
+      await expect(result.current.removeAccount('corrente')).rejects.toThrow();
+    });
+    expect(result.current.snapshot?.accounts).toHaveLength(3);
   });
 });
 

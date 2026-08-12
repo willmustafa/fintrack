@@ -30,10 +30,13 @@ describe('Início (dashboard)', () => {
     expect(screen.getByText('Saldo consolidado · 2 contas')).toBeOnTheScreen();
   });
 
-  it('mostra faturas abertas e gasto do mês', async () => {
+  it('abre com receitas, gasto do mês e faturas no topo', async () => {
     await renderScreen(<DashboardScreen />);
-    expect(screen.getByText('R$ 1.250')).toBeOnTheScreen();
+    expect(screen.getByText('Receitas')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 5.000')).toBeOnTheScreen();
+    expect(screen.getByText('Gasto do mês')).toBeOnTheScreen();
     expect(screen.getByText('R$ 2.380')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 1.250')).toBeOnTheScreen();
   });
 
   it('mostra a receita do mês no bloco de orçamento', async () => {
@@ -41,43 +44,64 @@ describe('Início (dashboard)', () => {
     expect(screen.getByText('receita R$ 5.000')).toBeOnTheScreen();
   });
 
-  it('quebra os gastos em 50/30/20 com os percentuais', async () => {
+  it('quebra os gastos em 50/30/20 no bloco de orçamento', async () => {
     await renderScreen(<DashboardScreen />);
-    // Os rótulos aparecem duas vezes: na legenda da rosca e no bloco de orçamento.
-    expect(screen.getAllByText('Essenciais')).toHaveLength(2);
-    expect(screen.getAllByText('Outros')).toHaveLength(2);
-    expect(screen.getAllByText('Investimentos')).toHaveLength(2);
-    expect(screen.getByText('50%')).toBeOnTheScreen();
-    expect(screen.getByText('30%')).toBeOnTheScreen();
-    expect(screen.getByText('20%')).toBeOnTheScreen();
+    // Sem a rosca, cada rótulo aparece uma única vez.
+    expect(screen.getByText('Essenciais')).toBeOnTheScreen();
+    expect(screen.getByText('Outros')).toBeOnTheScreen();
+    expect(screen.getByText('Investimentos')).toBeOnTheScreen();
   });
 
-  it('conta as metas em andamento', async () => {
+  it('não tem mais a rosca de divisão de gastos', async () => {
     await renderScreen(<DashboardScreen />);
-    // g1, g2 e g3 têm alvo e ainda não fecharam; g4 está sem alvo.
-    expect(screen.getByText('3')).toBeOnTheScreen();
+    expect(screen.queryByText('Divisão de gastos')).toBeNull();
+    expect(screen.queryByText('Receitas × Gastos')).toBeNull();
   });
 
-  it('mostra a legenda de receitas × gastos', async () => {
+  it('resume a sobra do mês em vez de receitas × gastos', async () => {
     await renderScreen(<DashboardScreen />);
-    expect(screen.getByText('Receita')).toBeOnTheScreen();
-    expect(screen.getByText('Gasto')).toBeOnTheScreen();
+    // Entradas 5.000 − saídas 2.380.
+    expect(screen.getByText('Sobrou no mês')).toBeOnTheScreen();
+    expect(screen.getByText('+R$ 2.620')).toBeOnTheScreen();
   });
 
   it.each([
     ['R$ 1.250', '/cartoes'],
     ['R$ 2.380', '/transacoes'],
+    ['R$ 5.000', '/transacoes'],
   ])('o atalho %s leva para %s', async (texto, rota) => {
     await renderScreen(<DashboardScreen />);
     await userEvent.press(screen.getByText(texto));
     expect(router.push).toHaveBeenCalledWith(rota);
   });
 
-  it('os cards de metas e financiamento navegam', async () => {
+  it('lista as três metas mais perto de fechar, da maior para a menor', async () => {
     await renderScreen(<DashboardScreen />);
-    await userEvent.press(screen.getByText('Metas em andamento'));
-    expect(router.push).toHaveBeenCalledWith('/metas');
+    expect(screen.getByText('Quase lá')).toBeOnTheScreen();
+    expect(screen.getByText('Viagem Japão')).toBeOnTheScreen();
+    expect(screen.getByText('Reserva de emergência')).toBeOnTheScreen();
+    expect(screen.getByText('Notebook')).toBeOnTheScreen();
+    // "Sofá novo" ainda não tem alvo, então fica de fora.
+    expect(screen.queryByText('Sofá novo')).toBeNull();
+    expect(screen.getByText('82%')).toBeOnTheScreen();
+  });
 
+  it('a seção de metas leva para a lista completa', async () => {
+    await renderScreen(<DashboardScreen />);
+    await userEvent.press(screen.getByText('Quase lá'));
+    expect(router.push).toHaveBeenCalledWith('/metas');
+  });
+
+  it('o financiamento mostra quantos meses faltam', async () => {
+    await renderScreen(<DashboardScreen />);
+    // De mai/2024 até mar/2044.
+    expect(screen.getByText('238')).toBeOnTheScreen();
+    expect(screen.getByText('meses até quitar · 19 anos e 10 meses')).toBeOnTheScreen();
+    expect(screen.getByText('30,6% quitado')).toBeOnTheScreen();
+  });
+
+  it('o card de financiamento navega', async () => {
+    await renderScreen(<DashboardScreen />);
     await userEvent.press(screen.getByText('Financiamento'));
     expect(router.push).toHaveBeenCalledWith('/financiamento');
   });
@@ -179,9 +203,29 @@ describe('Transações', () => {
     await userEvent.press(screen.getByLabelText('Nova transação'));
     expect(router.push).toHaveBeenCalledWith('/transacao/nova');
   });
+
+  it('tocar numa transação abre a edição dela', async () => {
+    await renderScreen(<TransacoesScreen />);
+    await userEvent.press(screen.getByText('Mercado'));
+    expect(router.push).toHaveBeenCalledWith('/transacao/t2');
+  });
 });
 
-describe('Cartões', () => {
+describe('Cartões e contas', () => {
+  it('separa contas e cartões em seções', async () => {
+    await renderScreen(<CartoesScreen />);
+    expect(screen.getByText('Cartões e contas')).toBeOnTheScreen();
+    expect(screen.getByText('CONTAS')).toBeOnTheScreen();
+    expect(screen.getByText('CARTÕES')).toBeOnTheScreen();
+  });
+
+  it('lista as contas do seed com o saldo', async () => {
+    await renderScreen(<CartoesScreen />);
+    expect(screen.getByText('Conta corrente conjunta')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 2.620,00')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 1.430,00')).toBeOnTheScreen();
+  });
+
   it('mostra o total de faturas abertas', async () => {
     await renderScreen(<CartoesScreen />);
     expect(screen.getByText('Faturas abertas R$ 1.250')).toBeOnTheScreen();
@@ -193,7 +237,7 @@ describe('Cartões', () => {
     expect(screen.getByText('Inter Gold')).toBeOnTheScreen();
   });
 
-  it('começa no primeiro cartão, com limite e datas', async () => {
+  it('junta fatura, limite e datas no mesmo bloco do cartão', async () => {
     await renderScreen(<CartoesScreen />);
     expect(screen.getByText('R$ 5.170 disponíveis')).toBeOnTheScreen();
     expect(screen.getByText('Usado R$ 830')).toBeOnTheScreen();
@@ -202,19 +246,36 @@ describe('Cartões', () => {
     expect(screen.getByText('5')).toBeOnTheScreen();
   });
 
-  it('lista os lançamentos do cartão selecionado', async () => {
+  it('não mostra mais os lançamentos da fatura', async () => {
     await renderScreen(<CartoesScreen />);
-    expect(screen.getByText('Ônibus Trabalho')).toBeOnTheScreen();
-    expect(screen.queryByText('Restaurante')).toBeNull();
+    expect(screen.queryByText('Lançamentos da fatura')).toBeNull();
+    expect(screen.queryByText('Ônibus Trabalho')).toBeNull();
   });
 
-  it('trocar de cartão troca limite e lançamentos', async () => {
+  it('o botão de extrato leva para as transações', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByText('Ver lançamentos no extrato'));
+    expect(router.push).toHaveBeenCalledWith('/transacoes');
+  });
+
+  it('trocar de cartão troca fatura e limite', async () => {
     await renderScreen(<CartoesScreen />);
     await userEvent.press(screen.getByText('Inter Gold'));
-
     await waitFor(() => expect(screen.getByText('R$ 3.080 disponíveis')).toBeOnTheScreen());
-    expect(screen.getByText('Restaurante')).toBeOnTheScreen();
-    expect(screen.queryByText('Ônibus Trabalho')).toBeNull();
+  });
+
+  it('o + oferece criar conta ou cartão', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByLabelText('Adicionar'));
+    await userEvent.press(await screen.findByText('Novo cartão'));
+    expect(router.push).toHaveBeenCalledWith('/conta/nova?kind=cartao');
+  });
+
+  it('editar uma conta abre o formulário dela', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByText('Conta corrente conjunta'));
+    await userEvent.press(await screen.findByText('Editar'));
+    expect(router.push).toHaveBeenCalledWith('/conta/corrente');
   });
 });
 

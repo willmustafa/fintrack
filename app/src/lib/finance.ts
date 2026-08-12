@@ -4,8 +4,9 @@
  * agregados prontos, basta trocar as chamadas por campos da API.
  */
 
+import { parseMonthLong } from '@/lib/format';
 import { colors } from '@/theme/tokens';
-import type { Account, BudgetSlice, Goal, Investment, Transaction } from '@/types';
+import type { Account, BudgetSlice, Goal, Investment, Loan, Transaction } from '@/types';
 
 export const REFERENCE_MONTH = '2024-05';
 
@@ -24,6 +25,34 @@ export const signOf = (t: Transaction): number => {
 export const signedAmount = (t: Transaction): number => signOf(t) * t.amount;
 
 export const isInMonth = (iso: string, month: string) => iso.startsWith(month);
+
+/**
+ * Aplica o efeito de um lançamento nos saldos e faturas.
+ *
+ * `direction` 1 lança e -1 desfaz — é o que permite editar (desfaz o antigo,
+ * aplica o novo) e excluir sem recarregar o snapshot inteiro.
+ */
+export function applyTransaction(
+  accounts: Account[],
+  transaction: Transaction,
+  direction: 1 | -1,
+): Account[] {
+  return accounts.map((account) => {
+    // Destino da transferência recebe o valor
+    if (account.id === transaction.toAccountId) {
+      return { ...account, balance: account.balance + direction * transaction.amount };
+    }
+    if (account.id !== transaction.accountId) return account;
+    // Gasto no cartão vai para a fatura, não para um saldo
+    if (account.kind === 'cartao') {
+      return transaction.kind === 'gasto'
+        ? { ...account, invoice: (account.invoice ?? 0) + direction * transaction.amount }
+        : account;
+    }
+    const delta = transaction.kind === 'ganho' ? transaction.amount : -transaction.amount;
+    return { ...account, balance: account.balance + direction * delta };
+  });
+}
 
 export function consolidatedBalance(accounts: Account[]): number {
   return accounts
@@ -117,6 +146,34 @@ export const investmentYield = (investment: Investment): number =>
 
 export const goalProgress = (goal: Goal): number =>
   goal.target && goal.target > 0 ? Math.min(goal.saved / goal.target, 1) : 0;
+
+/**
+ * Metas mais próximas de concluir, da mais adiantada para a menos.
+ * Fica de fora quem ainda não tem alvo (depende de orçamento) e quem já fechou.
+ */
+export function goalsClosestToDone(goals: Goal[], limit = 3): Goal[] {
+  return goals
+    .filter((goal) => goal.target !== undefined && goal.target > 0 && goal.saved < goal.target)
+    .sort((a, b) => goalProgress(b) - goalProgress(a))
+    .slice(0, limit);
+}
+
+/** Meses de `fromMonth` até `toMonth` (`YYYY-MM`); nunca negativo. */
+export function monthsBetween(fromMonth: string, toMonth: string): number {
+  const [fromYear, from] = fromMonth.split('-').map(Number);
+  const [toYear, to] = toMonth.split('-').map(Number);
+  return Math.max((toYear - fromYear) * 12 + (to - from), 0);
+}
+
+/** Quantos meses faltam para quitar — `payoffDate` chega como `mar/2044`. */
+export function monthsToPayoff(loan: Loan, fromMonth = REFERENCE_MONTH): number {
+  const payoff = parseMonthLong(loan.payoffDate);
+  return payoff ? monthsBetween(fromMonth, payoff) : 0;
+}
+
+/** Fatia já quitada do financiamento, de 0 a 1. */
+export const loanPaidRatio = (loan: Loan): number =>
+  loan.total > 0 ? (loan.total - loan.balance) / loan.total : 0;
 
 export function groupByDay(transactions: Transaction[]): [string, Transaction[]][] {
   const map = new Map<string, Transaction[]>();

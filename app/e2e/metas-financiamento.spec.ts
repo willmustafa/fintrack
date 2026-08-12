@@ -76,16 +76,18 @@ test.describe('Financiamento', () => {
 });
 
 test.describe('Cartões e investimentos', () => {
-  test('trocar de cartão troca limite e lançamentos', async ({ page }) => {
+  test('trocar de cartão troca fatura, limite e datas no mesmo bloco', async ({ page }) => {
     await entrar(page);
     await irParaAba(page, 'Cartões');
 
     await expect(page.getByText('R$ 5.170 disponíveis')).toBeVisible();
-    await expect(page.getByText('Ônibus Trabalho')).toBeVisible();
+    await expect(page.getByText('Total R$ 6.000')).toBeVisible();
+    // Os lançamentos da fatura saíram desta tela e ficam no extrato.
+    await expect(page.getByText('Lançamentos da fatura')).toHaveCount(0);
 
     await page.getByText('Inter Gold').click();
     await expect(page.getByText('R$ 3.080 disponíveis')).toBeVisible();
-    await expect(page.getByText('Restaurante')).toBeVisible();
+    await expect(page.getByText('Total R$ 3.500')).toBeVisible();
   });
 
   test('a carteira mostra o patrimônio e os ativos por classe', async ({ page }) => {

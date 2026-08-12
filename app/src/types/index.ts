@@ -46,6 +46,8 @@ export type Account = {
   kind: AccountKind;
   balance: number;
   ownerId: OwnerId;
+  /** Banco escolhido no seletor (ver `src/data/banks.ts`) */
+  bank?: string;
   /** Cartões: limite total e fatura aberta */
   limit?: number;
   invoice?: number;

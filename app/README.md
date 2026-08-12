@@ -89,7 +89,7 @@ src/
 | Metas           | V1 (cards com progresso) + tela de comparação de orçamentos               |
 | Financiamento   | Visão geral e Amortização, com rateio entre Ana e Marcelo                 |
 | Perfil          | Configurações + modal de convite, com as subtelas de edição, notificações, segurança e compartilhamento |
-| Cartões         | **Não existe no board** (só na barra de navegação) — montada com os mesmos componentes |
+| Cartões e contas | **Não existe no board** — lista contas e cartões com criar/editar/excluir, seletor de banco brasileiro e "conta conjunta"; o cartão junta fatura, limite e datas num bloco só (os lançamentos ficam no extrato) |
 
 ## Conectando ao backend Go
 
@@ -116,6 +116,9 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | PATCH  | `/members/:id`          | `Person`                                              |
 | DELETE | `/members/:id`          | `204`                                                 |
 | PUT    | `/accounts/:id/sharing` | `Account`                                             |
+| POST   | `/accounts`             | `Account`                                             |
+| PUT    | `/accounts/:id`         | `Account`                                             |
+| DELETE | `/accounts/:id`         | `204`                                                 |
 | POST   | `/invites`              | `Invite`                                              |
 | POST   | `/invites/:id/resend`   | `Invite`                                              |
 | DELETE | `/invites/:id`          | `204`                                                 |

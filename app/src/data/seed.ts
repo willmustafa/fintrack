@@ -31,14 +31,15 @@ export const people: Person[] = [
 export const currentPerson = people[0];
 
 export const accounts: Account[] = [
-  { id: 'corrente', name: 'Conta corrente conjunta', kind: 'corrente', balance: 2620, ownerId: 'casal' },
-  { id: 'poupanca', name: 'Poupança', kind: 'poupanca', balance: 1430, ownerId: 'casal' },
+  { id: 'corrente', name: 'Conta corrente conjunta', kind: 'corrente', balance: 2620, ownerId: 'casal', bank: 'bb' },
+  { id: 'poupanca', name: 'Poupança', kind: 'poupanca', balance: 1430, ownerId: 'casal', bank: 'caixa' },
   {
     id: 'nubank',
     name: 'Nubank (casal)',
     kind: 'cartao',
     balance: 0,
     ownerId: 'casal',
+    bank: 'nubank',
     limit: 6000,
     invoice: 830,
     closingDay: 28,
@@ -51,6 +52,7 @@ export const accounts: Account[] = [
     kind: 'cartao',
     balance: 0,
     ownerId: 'marcelo',
+    bank: 'inter',
     limit: 3500,
     invoice: 420,
     closingDay: 20,

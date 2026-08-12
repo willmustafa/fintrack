@@ -11,6 +11,7 @@ import {
 
 import { api, type Snapshot } from '@/services/api';
 import type {
+  Account,
   Goal,
   Invite,
   MemberAccess,
@@ -42,6 +43,10 @@ type Store = State & {
   updateMemberAccess: (personId: string, access: MemberAccess) => Promise<void>;
   removeMember: (personId: string) => Promise<void>;
   setAccountShared: (accountId: string, shared: boolean) => Promise<void>;
+  /** Contas e cartões: criar, editar e excluir */
+  addAccount: (input: Omit<Account, 'id'>) => Promise<Account>;
+  saveAccount: (accountId: string, input: Omit<Account, 'id'>) => Promise<Account>;
+  removeAccount: (accountId: string) => Promise<void>;
   resendInvite: (inviteId: string) => Promise<void>;
   cancelInvite: (inviteId: string) => Promise<void>;
 };
@@ -239,6 +244,41 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
     [patchSnapshot],
   );
 
+  const addAccount = useCallback(
+    async (input: Omit<Account, 'id'>) => {
+      const account = await api.createAccount(input);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: [...snapshot.accounts, account],
+      }));
+      return account;
+    },
+    [patchSnapshot],
+  );
+
+  const saveAccount = useCallback(
+    async (accountId: string, input: Omit<Account, 'id'>) => {
+      const account = await api.updateAccount(accountId, input);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: snapshot.accounts.map((item) => (item.id === account.id ? account : item)),
+      }));
+      return account;
+    },
+    [patchSnapshot],
+  );
+
+  const removeAccount = useCallback(
+    async (accountId: string) => {
+      await api.deleteAccount(accountId);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        accounts: snapshot.accounts.filter((item) => item.id !== accountId),
+      }));
+    },
+    [patchSnapshot],
+  );
+
   const resendInvite = useCallback(
     async (inviteId: string) => {
       const invite = await api.resendInvite(inviteId);
@@ -278,6 +318,9 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       updateMemberAccess,
       removeMember,
       setAccountShared,
+      addAccount,
+      saveAccount,
+      removeAccount,
       resendInvite,
       cancelInvite,
     }),
@@ -295,6 +338,9 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       updateMemberAccess,
       removeMember,
       setAccountShared,
+      addAccount,
+      saveAccount,
+      removeAccount,
       resendInvite,
       cancelInvite,
     ],

@@ -181,7 +181,21 @@ describe('Transações', () => {
   });
 });
 
-describe('Cartões', () => {
+describe('Cartões e contas', () => {
+  it('separa contas e cartões em seções', async () => {
+    await renderScreen(<CartoesScreen />);
+    expect(screen.getByText('Cartões e contas')).toBeOnTheScreen();
+    expect(screen.getByText('CONTAS')).toBeOnTheScreen();
+    expect(screen.getByText('CARTÕES')).toBeOnTheScreen();
+  });
+
+  it('lista as contas do seed com o saldo', async () => {
+    await renderScreen(<CartoesScreen />);
+    expect(screen.getByText('Conta corrente conjunta')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 2.620,00')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 1.430,00')).toBeOnTheScreen();
+  });
+
   it('mostra o total de faturas abertas', async () => {
     await renderScreen(<CartoesScreen />);
     expect(screen.getByText('Faturas abertas R$ 1.250')).toBeOnTheScreen();
@@ -193,7 +207,7 @@ describe('Cartões', () => {
     expect(screen.getByText('Inter Gold')).toBeOnTheScreen();
   });
 
-  it('começa no primeiro cartão, com limite e datas', async () => {
+  it('junta fatura, limite e datas no mesmo bloco do cartão', async () => {
     await renderScreen(<CartoesScreen />);
     expect(screen.getByText('R$ 5.170 disponíveis')).toBeOnTheScreen();
     expect(screen.getByText('Usado R$ 830')).toBeOnTheScreen();
@@ -202,19 +216,36 @@ describe('Cartões', () => {
     expect(screen.getByText('5')).toBeOnTheScreen();
   });
 
-  it('lista os lançamentos do cartão selecionado', async () => {
+  it('não mostra mais os lançamentos da fatura', async () => {
     await renderScreen(<CartoesScreen />);
-    expect(screen.getByText('Ônibus Trabalho')).toBeOnTheScreen();
-    expect(screen.queryByText('Restaurante')).toBeNull();
+    expect(screen.queryByText('Lançamentos da fatura')).toBeNull();
+    expect(screen.queryByText('Ônibus Trabalho')).toBeNull();
   });
 
-  it('trocar de cartão troca limite e lançamentos', async () => {
+  it('o botão de extrato leva para as transações', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByText('Ver lançamentos no extrato'));
+    expect(router.push).toHaveBeenCalledWith('/transacoes');
+  });
+
+  it('trocar de cartão troca fatura e limite', async () => {
     await renderScreen(<CartoesScreen />);
     await userEvent.press(screen.getByText('Inter Gold'));
-
     await waitFor(() => expect(screen.getByText('R$ 3.080 disponíveis')).toBeOnTheScreen());
-    expect(screen.getByText('Restaurante')).toBeOnTheScreen();
-    expect(screen.queryByText('Ônibus Trabalho')).toBeNull();
+  });
+
+  it('o + oferece criar conta ou cartão', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByLabelText('Adicionar'));
+    await userEvent.press(await screen.findByText('Novo cartão'));
+    expect(router.push).toHaveBeenCalledWith('/conta/nova?kind=cartao');
+  });
+
+  it('editar uma conta abre o formulário dela', async () => {
+    await renderScreen(<CartoesScreen />);
+    await userEvent.press(screen.getByText('Conta corrente conjunta'));
+    await userEvent.press(await screen.findByText('Editar'));
+    expect(router.push).toHaveBeenCalledWith('/conta/corrente');
   });
 });
 

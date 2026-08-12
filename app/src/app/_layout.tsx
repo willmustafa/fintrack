@@ -42,6 +42,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="transacao/nova" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="conta/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="metas/index" />
         <Stack.Screen name="metas/[id]" />
         <Stack.Screen name="financiamento/index" />

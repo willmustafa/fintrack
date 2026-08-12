@@ -30,6 +30,9 @@ jest.mock('@/services/api', () => {
       updateMemberAccess: jest.fn(),
       removeMember: jest.fn(),
       setAccountShared: jest.fn(),
+      createAccount: jest.fn(),
+      updateAccount: jest.fn(),
+      deleteAccount: jest.fn(),
       createTransaction: jest.fn(),
       chooseGoalQuote: jest.fn(),
       sendInvite: jest.fn(),
@@ -453,6 +456,59 @@ describe('membros', () => {
     });
     expect(result.current.snapshot?.accounts[0].ownerId).toBe('casal');
     expect(mockApi.setAccountShared).toHaveBeenCalledWith('corrente', true);
+  });
+});
+
+describe('contas e cartões (CRUD)', () => {
+  const nova: Omit<Account, 'id'> = {
+    name: 'Cartão Novo',
+    kind: 'cartao',
+    balance: 0,
+    ownerId: 'ana',
+    limit: 5000,
+    invoice: 0,
+  };
+
+  it('addAccount acrescenta a conta no fim da lista', async () => {
+    const { result } = await renderLogged();
+    mockApi.createAccount.mockResolvedValue({ ...nova, id: 'a1' });
+    await act(async () => {
+      await result.current.addAccount(nova);
+    });
+    expect(mockApi.createAccount).toHaveBeenCalledWith(nova);
+    expect(result.current.snapshot?.accounts).toHaveLength(4);
+    expect(result.current.snapshot?.accounts[3]).toMatchObject({ id: 'a1', name: 'Cartão Novo' });
+  });
+
+  it('saveAccount substitui a conta editada mantendo a ordem', async () => {
+    const { result } = await renderLogged();
+    mockApi.updateAccount.mockResolvedValue({ ...conta, name: 'Corrente renomeada' });
+    await act(async () => {
+      await result.current.saveAccount('corrente', { ...conta, name: 'Corrente renomeada' });
+    });
+    expect(result.current.snapshot?.accounts[0]).toMatchObject({
+      id: 'corrente',
+      name: 'Corrente renomeada',
+    });
+    expect(result.current.snapshot?.accounts).toHaveLength(3);
+  });
+
+  it('removeAccount tira a conta da lista', async () => {
+    const { result } = await renderLogged();
+    mockApi.deleteAccount.mockResolvedValue(undefined);
+    await act(async () => {
+      await result.current.removeAccount('poupanca');
+    });
+    expect(result.current.snapshot?.accounts.map((a) => a.id)).toEqual(['corrente', 'nubank']);
+  });
+
+  it('removeAccount não mexe na lista quando a API falha', async () => {
+    const { result } = await renderLogged();
+    mockApi.deleteAccount.mockRejectedValue(new Error('Não foi possível excluir.'));
+    await act(async () => {
+      await expect(result.current.removeAccount('corrente')).rejects.toThrow();
+    });
+    expect(result.current.snapshot?.accounts).toHaveLength(3);
   });
 });
 

@@ -4,10 +4,13 @@ import { Alert, ScrollView, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { Card, ListRow } from '@/components/ui';
+import { splitTotals } from '@/lib/finance';
+import { formatCurrency } from '@/lib/format';
 import { isMockMode } from '@/services/api';
 import {
   useCurrentPerson,
   useFintrack,
+  useLedger,
   usePreferences,
   useSnapshot,
 } from '@/store/fintrack-store';
@@ -22,6 +25,8 @@ export default function MaisScreen() {
 
   const openGoals = goals.filter((goal) => !goal.target || goal.saved < goal.target).length;
   const activeAlerts = Object.values(notifications).filter(Boolean).length;
+  const ledger = useLedger();
+  const totals = splitTotals(ledger);
 
   const confirmSignOut = () =>
     Alert.alert('Sair da conta', 'Você precisará entrar de novo com e-mail e senha.', [
@@ -44,6 +49,16 @@ export default function MaisScreen() {
             title="Metas"
             subtitle={`${openGoals} em andamento`}
             onPress={() => router.push('/metas')}
+          />
+          <ListRow
+            icon="swap-horizontal-outline"
+            title="Acertos"
+            subtitle={
+              totals.toReceive === 0 && totals.toPay === 0
+                ? 'Nada dividido no momento'
+                : `${formatCurrency(totals.toReceive)} a receber · ${formatCurrency(totals.toPay)} a pagar`
+            }
+            onPress={() => router.push('/acertos')}
           />
           <ListRow
             icon="home-outline"

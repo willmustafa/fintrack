@@ -131,6 +131,22 @@ export function dayGroupLabel(iso: string, today: string): string {
   return formatDayMonth(iso);
 }
 
+/**
+ * Últimos dias como opções de escolha — o app não usa date picker nativo.
+ * `reference` é injetado para manter a função pura/testável.
+ */
+export function recentDateOptions(
+  reference: string,
+  days = 14,
+): { value: string; label: string; hint?: string }[] {
+  const base = Date.parse(`${reference}T12:00:00`);
+  return Array.from({ length: days }, (_, index) => {
+    const iso = new Date(base - index * 86400000).toISOString().slice(0, 10);
+    const label = index === 0 ? 'Hoje' : index === 1 ? 'Ontem' : formatDate(iso);
+    return { value: iso, label, hint: index <= 1 ? formatDate(iso) : undefined };
+  });
+}
+
 /** Digitação de valor no teclado numérico: `15630` → `156,30` */
 export function centsToInput(digits: string): string {
   const clean = digits.replace(/\D/g, '').replace(/^0+(?=\d)/, '');

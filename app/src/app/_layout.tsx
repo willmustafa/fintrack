@@ -43,6 +43,11 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="transacao/[id]" options={{ presentation: 'modal' }} />
         <Stack.Screen name="conta/[id]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="acertos/index" />
+        <Stack.Screen name="acertos/[id]" />
+        <Stack.Screen name="acertos/pessoas" />
+        <Stack.Screen name="acertos/nova" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="acertos/acertar" options={{ presentation: 'modal' }} />
         <Stack.Screen name="metas/index" />
         <Stack.Screen name="metas/[id]" />
         <Stack.Screen name="financiamento/index" />

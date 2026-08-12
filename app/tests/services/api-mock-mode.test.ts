@@ -67,6 +67,8 @@ describe('snapshot', () => {
       people: seed.people,
       accounts: seed.accounts,
       transactions: seed.transactions,
+      contacts: seed.contacts,
+      splits: seed.splits,
       investments: seed.investments,
       goals: seed.goals,
       loans: seed.loans,
@@ -250,5 +252,63 @@ describe('convites', () => {
 
   it('cancelInvite resolve sem erro', async () => {
     await expect(api.cancelInvite('inv1')).resolves.toBeUndefined();
+  });
+});
+
+describe('divisão de contas', () => {
+  it('createContact devolve a pessoa com id do "servidor"', async () => {
+    const contact = await api.createContact({ name: 'Bruna', initial: 'B', ownerId: 'ana' });
+    expect(contact).toMatchObject({ name: 'Bruna', initial: 'B', ownerId: 'ana' });
+    expect(contact.id).toMatch(/^c\d+$/);
+  });
+
+  it('updateContact mantém o id e devolve os campos novos', async () => {
+    const contact = await api.updateContact('c1', {
+      name: 'João Pedro',
+      initial: 'J',
+      ownerId: 'ana',
+      personId: 'marcelo',
+    });
+    expect(contact).toEqual({
+      id: 'c1',
+      name: 'João Pedro',
+      initial: 'J',
+      ownerId: 'ana',
+      personId: 'marcelo',
+    });
+  });
+
+  it('deleteContact resolve sem erro', async () => {
+    await expect(api.deleteContact('c1')).resolves.toBeUndefined();
+  });
+
+  it('createSplits devolve uma divisão por pessoa, com ids diferentes', async () => {
+    const base = {
+      ownerId: 'ana' as const,
+      direction: 'a-receber' as const,
+      description: 'Mercado',
+      amount: 52.1,
+      date: '2024-05-24',
+      transactionId: 't2',
+    };
+    const splits = await api.createSplits([
+      { ...base, contactId: 'c1' },
+      { ...base, contactId: 'c2' },
+    ]);
+
+    expect(splits).toHaveLength(2);
+    expect(splits.map((split) => split.contactId)).toEqual(['c1', 'c2']);
+    expect(new Set(splits.map((split) => split.id)).size).toBe(2);
+    expect(splits[0].id).toMatch(/^sp\d+$/);
+  });
+
+  it('createSplits com lista vazia devolve lista vazia', async () => {
+    await expect(api.createSplits([])).resolves.toEqual([]);
+  });
+
+  it('deleteSplit, settleSplits e reopenSplit resolvem sem erro', async () => {
+    await expect(api.deleteSplit('sp1')).resolves.toBeUndefined();
+    await expect(api.settleSplits(['sp1'], 't99', '2024-05-24')).resolves.toBeUndefined();
+    await expect(api.reopenSplit('sp1')).resolves.toBeUndefined();
   });
 });

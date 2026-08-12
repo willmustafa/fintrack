@@ -135,7 +135,9 @@ describe('Transações', () => {
 
   it('mostra a conta de cada lançamento no subtítulo', async () => {
     await renderScreen(<TransacoesScreen />);
-    expect(screen.getByText('Essenciais · Nubank (casal)')).toBeOnTheScreen();
+    // O mercado do seed foi rachado com João e Camila — daí o "dividido".
+    expect(screen.getByText('Essenciais · Nubank (casal) · dividido')).toBeOnTheScreen();
+    expect(screen.getByText('Assinatura · Nubank (casal)')).toBeOnTheScreen();
   });
 
   it('filtra pela busca', async () => {
@@ -324,8 +326,15 @@ describe('Mais', () => {
     expect(screen.getByText('FinTrack · versão 1.0.0')).toBeOnTheScreen();
   });
 
+  it('resume no atalho de Acertos quanto tem a receber e a pagar', async () => {
+    await renderScreen(<MaisScreen />);
+    expect(screen.getByText('Acertos')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 104,20 a receber · R$ 145,00 a pagar')).toBeOnTheScreen();
+  });
+
   it.each([
     ['Metas', '/metas'],
+    ['Acertos', '/acertos'],
     ['Financiamento', '/financiamento'],
     ['Perfil e compartilhamento', '/perfil'],
     ['Notificações', '/perfil/notificacoes'],

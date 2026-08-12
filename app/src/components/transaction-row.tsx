@@ -18,6 +18,7 @@ const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name
   Outros: 'fast-food-outline',
   Investimentos: 'trending-up-outline',
   Transferência: 'swap-horizontal-outline',
+  Acerto: 'people-outline',
   Moradia: 'home-outline',
 };
 

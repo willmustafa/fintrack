@@ -26,7 +26,7 @@ const KIND_OPTIONS: PickerOption<TransactionKind | 'todos'>[] = [
 /** Transações · V1 do board (busca + filtros + agrupamento por dia). */
 export default function TransacoesScreen() {
   const router = useRouter();
-  const { transactions, accounts } = useSnapshot();
+  const { transactions, accounts, splits } = useSnapshot();
 
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<TransactionKind | 'todos'>('todos');
@@ -68,6 +68,12 @@ export default function TransacoesScreen() {
       return true;
     });
   }, [transactions, kind, category, accountId, search]);
+
+  /** Lançamentos rachados ganham um "dividido" no subtítulo. */
+  const splitTransactionIds = useMemo(
+    () => new Set(splits.map((split) => split.transactionId).filter(Boolean)),
+    [splits],
+  );
 
   const grouped = useMemo(() => groupByDay(filtered), [filtered]);
   const income = monthIncome(filtered);
@@ -141,7 +147,9 @@ export default function TransacoesScreen() {
               <TransactionRow
                 key={transaction.id}
                 transaction={transaction}
-                subtitle={`${transaction.category} · ${accountName(transaction.accountId)}`}
+                subtitle={`${transaction.category} · ${accountName(transaction.accountId)}${
+                  splitTransactionIds.has(transaction.id) ? ' · dividido' : ''
+                }`}
                 onPress={() => router.push(`/transacao/${transaction.id}`)}
                 last={index === items.length - 1}
               />

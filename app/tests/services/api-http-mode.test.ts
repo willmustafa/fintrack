@@ -5,7 +5,7 @@
  * método, rota, corpo e headers de cada chamada, além do tratamento de erro.
  * Se o Go divergir daqui, o app quebra — e o teste avisa antes.
  */
-import type { Preferences, Transaction } from '@/types';
+import type { Preferences, Split, Transaction } from '@/types';
 
 type ApiModule = typeof import('@/services/api');
 
@@ -280,6 +280,90 @@ describe('/transactions/:id', () => {
     fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
     await expect(api.deleteTransaction('t2')).resolves.toBeUndefined();
     expect(lastCall()).toMatchObject({ url: `${BASE}/transactions/t2`, method: 'DELETE' });
+  });
+});
+
+describe('/contacts', () => {
+  const input = { name: 'João Pedro', initial: 'J', ownerId: 'ana' as const };
+
+  it('POST cria a pessoa sem id', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ...input, id: 'c9' }));
+    await expect(api.createContact(input)).resolves.toMatchObject({ id: 'c9' });
+    const call = lastCall();
+    expect(call).toMatchObject({ url: `${BASE}/contacts`, method: 'POST', body: input });
+    expect(call.body).not.toHaveProperty('id');
+  });
+
+  it('PUT edita — é o que vincula a pessoa a quem usa o app', async () => {
+    const linked = { ...input, personId: 'marcelo' as const };
+    fetchMock.mockResolvedValue(jsonResponse({ ...linked, id: 'c9' }));
+    await api.updateContact('c9', linked);
+    expect(lastCall()).toMatchObject({
+      url: `${BASE}/contacts/c9`,
+      method: 'PUT',
+      body: linked,
+    });
+  });
+
+  it('DELETE remove e aceita 204 sem corpo', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.deleteContact('c9')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({ url: `${BASE}/contacts/c9`, method: 'DELETE' });
+  });
+});
+
+describe('/splits', () => {
+  const input: Omit<Split, 'id'> = {
+    ownerId: 'ana',
+    contactId: 'c1',
+    direction: 'a-receber',
+    description: 'Mercado',
+    amount: 52.1,
+    date: '2024-05-24',
+    transactionId: 't2',
+  };
+
+  it('POST manda as divisões de um lançamento em lote', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([{ ...input, id: 'sp9' }]));
+    await expect(api.createSplits([input])).resolves.toMatchObject([{ id: 'sp9' }]);
+    expect(lastCall()).toMatchObject({
+      url: `${BASE}/splits`,
+      method: 'POST',
+      body: { splits: [input] },
+    });
+  });
+
+  it('valores em reais como número e data YYYY-MM-DD', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([]));
+    await api.createSplits([input]);
+    const [split] = lastCall().body.splits;
+    expect(typeof split.amount).toBe('number');
+    expect(split.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('DELETE /splits/:id apaga a divisão', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.deleteSplit('sp9')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({ url: `${BASE}/splits/sp9`, method: 'DELETE' });
+  });
+
+  it('POST /splits/settle liga as divisões ao lançamento do pagamento', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.settleSplits(['sp1', 'sp4'], 't99', '2024-05-24')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({
+      url: `${BASE}/splits/settle`,
+      method: 'POST',
+      body: { splitIds: ['sp1', 'sp4'], transactionId: 't99', settledAt: '2024-05-24' },
+    });
+  });
+
+  it('DELETE /splits/:id/settlement desfaz o acerto', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.reopenSplit('sp1')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({
+      url: `${BASE}/splits/sp1/settlement`,
+      method: 'DELETE',
+    });
   });
 });
 

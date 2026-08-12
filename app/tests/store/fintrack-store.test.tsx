@@ -14,7 +14,16 @@ import {
   usePreferences,
   useSnapshot,
 } from '@/store/fintrack-store';
-import type { Account, Goal, Invite, Person, Preferences, Transaction } from '@/types';
+import type {
+  Account,
+  Contact,
+  Goal,
+  Invite,
+  Person,
+  Preferences,
+  Split,
+  Transaction,
+} from '@/types';
 
 jest.mock('@/services/api', () => {
   const actual = jest.requireActual('@/services/api');
@@ -40,6 +49,13 @@ jest.mock('@/services/api', () => {
       sendInvite: jest.fn(),
       resendInvite: jest.fn(),
       cancelInvite: jest.fn(),
+      createContact: jest.fn(),
+      updateContact: jest.fn(),
+      deleteContact: jest.fn(),
+      createSplits: jest.fn(),
+      deleteSplit: jest.fn(),
+      settleSplits: jest.fn(),
+      reopenSplit: jest.fn(),
     },
   };
 });
@@ -73,6 +89,8 @@ const cartao: Account = {
   invoice: 800,
 };
 
+const joao: Contact = { id: 'c1', name: 'João Pedro', initial: 'J', ownerId: 'ana' };
+
 const meta: Goal = { id: 'g1', name: 'Viagem', target: 12000, saved: 9800 };
 const convite: Invite = { id: 'inv1', email: 'joana@email.com', status: 'pendente', sentDaysAgo: 2 };
 const preferencias: Preferences = {
@@ -83,6 +101,8 @@ const snapshotBase = (): Snapshot => ({
   people: [ana, marcelo],
   accounts: [conta, poupanca, cartao],
   transactions: [],
+  contacts: [joao],
+  splits: [],
   investments: [],
   goals: [meta],
   loans: [],
@@ -715,5 +735,194 @@ describe('hooks auxiliares', () => {
     });
     await waitFor(() => expect(result.current.store.snapshot).not.toBeNull());
     expect(result.current.preferences).toEqual(preferencias);
+  });
+});
+
+describe('divisão de contas', () => {
+  const divisao = (over: Partial<Split> = {}): Split => ({
+    id: 'sp1',
+    ownerId: 'ana',
+    contactId: 'c1',
+    direction: 'a-receber',
+    description: 'Mercado',
+    amount: 52.1,
+    date: '2024-05-24',
+    transactionId: 't2',
+    ...over,
+  });
+
+  /** Snapshot com uma divisão em aberto e outra já acertada no mesmo lançamento. */
+  const comDivisoes = async (splits: Split[]) => {
+    mockApi.snapshot.mockResolvedValue({ ...snapshotBase(), splits });
+    return renderLogged();
+  };
+
+  it('addContact guarda a pessoa devolvida pela API', async () => {
+    const { result } = await renderLogged();
+    const nova: Contact = { id: 'c9', name: 'Bruna', initial: 'B', ownerId: 'ana' };
+    mockApi.createContact.mockResolvedValue(nova);
+
+    await act(async () => {
+      await result.current.addContact({ name: 'Bruna', initial: 'B', ownerId: 'ana' });
+    });
+    expect(result.current.snapshot?.contacts.map((c) => c.id)).toEqual(['c1', 'c9']);
+  });
+
+  it('saveContact troca a pessoa pela versão salva', async () => {
+    const { result } = await renderLogged();
+    mockApi.updateContact.mockResolvedValue({
+      id: 'c1',
+      name: 'João Pedro',
+      initial: 'J',
+      ownerId: 'ana',
+      personId: 'marcelo',
+    });
+
+    await act(async () => {
+      await result.current.saveContact('c1', {
+        name: 'João Pedro',
+        initial: 'J',
+        ownerId: 'ana',
+        personId: 'marcelo',
+      });
+    });
+    expect(result.current.snapshot?.contacts[0].personId).toBe('marcelo');
+  });
+
+  it('removeContact leva junto as divisões da pessoa', async () => {
+    const { result } = await comDivisoes([divisao(), divisao({ id: 'sp2', contactId: 'c2' })]);
+    mockApi.deleteContact.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.removeContact('c1');
+    });
+    expect(result.current.snapshot?.contacts).toHaveLength(0);
+    expect(result.current.snapshot?.splits.map((s) => s.id)).toEqual(['sp2']);
+  });
+
+  it('addSplits acrescenta as divisões criadas', async () => {
+    const { result } = await renderLogged();
+    mockApi.createSplits.mockResolvedValue([divisao(), divisao({ id: 'sp2', contactId: 'c2' })]);
+
+    await act(async () => {
+      await result.current.addSplits([divisao(), divisao({ contactId: 'c2' })]);
+    });
+    expect(result.current.snapshot?.splits.map((s) => s.id)).toEqual(['sp1', 'sp2']);
+  });
+
+  it('addSplits sem nada para criar nem chama a API', async () => {
+    const { result } = await renderLogged();
+    await act(async () => {
+      await expect(result.current.addSplits([])).resolves.toEqual([]);
+    });
+    expect(mockApi.createSplits).not.toHaveBeenCalled();
+  });
+
+  it('replaceTransactionSplits troca as pendentes e preserva as acertadas', async () => {
+    const acertada = divisao({ id: 'sp0', contactId: 'c2', settledAt: '2024-05-01' });
+    const { result } = await comDivisoes([acertada, divisao()]);
+    mockApi.deleteSplit.mockResolvedValue(undefined);
+    mockApi.createSplits.mockResolvedValue([divisao({ id: 'sp9', amount: 30 })]);
+
+    await act(async () => {
+      await result.current.replaceTransactionSplits('t2', [divisao({ amount: 30 })]);
+    });
+
+    expect(mockApi.deleteSplit).toHaveBeenCalledWith('sp1');
+    expect(mockApi.deleteSplit).toHaveBeenCalledTimes(1);
+    expect(result.current.snapshot?.splits.map((s) => s.id)).toEqual(['sp0', 'sp9']);
+  });
+
+  it('replaceTransactionSplits sem pessoas só apaga as antigas', async () => {
+    const { result } = await comDivisoes([divisao()]);
+    mockApi.deleteSplit.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.replaceTransactionSplits('t2', []);
+    });
+    expect(mockApi.createSplits).not.toHaveBeenCalled();
+    expect(result.current.snapshot?.splits).toHaveLength(0);
+  });
+
+  it('removeSplit tira só a divisão pedida', async () => {
+    const { result } = await comDivisoes([divisao(), divisao({ id: 'sp2' })]);
+    mockApi.deleteSplit.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.removeSplit('sp1');
+    });
+    expect(result.current.snapshot?.splits.map((s) => s.id)).toEqual(['sp2']);
+  });
+
+  it('settleSplits liga as divisões ao lançamento do pagamento', async () => {
+    const { result } = await comDivisoes([divisao(), divisao({ id: 'sp2' })]);
+    mockApi.settleSplits.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.settleSplits(['sp1'], 't99', '2024-05-24');
+    });
+
+    expect(mockApi.settleSplits).toHaveBeenCalledWith(['sp1'], 't99', '2024-05-24');
+    expect(result.current.snapshot?.splits[0]).toMatchObject({
+      settlementTransactionId: 't99',
+      settledAt: '2024-05-24',
+    });
+    expect(result.current.snapshot?.splits[1].settledAt).toBeUndefined();
+  });
+
+  it('reopenSplit desfaz o acerto', async () => {
+    const { result } = await comDivisoes([
+      divisao({ settledAt: '2024-05-24', settlementTransactionId: 't99' }),
+    ]);
+    mockApi.reopenSplit.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.reopenSplit('sp1');
+    });
+    expect(result.current.snapshot?.splits[0]).toMatchObject({
+      settledAt: undefined,
+      settlementTransactionId: undefined,
+    });
+  });
+
+  it('excluir o lançamento apaga a divisão que nasceu dele', async () => {
+    const { result } = await comDivisoes([divisao()]);
+    mockApi.snapshot.mockResolvedValue({
+      ...snapshotBase(),
+      transactions: [
+        {
+          id: 't2',
+          kind: 'gasto',
+          description: 'Mercado',
+          amount: 156.3,
+          category: 'Essenciais',
+          accountId: 'corrente',
+          date: '2024-05-24',
+          ownerId: 'ana',
+        },
+      ],
+      splits: [divisao()],
+    });
+    mockApi.deleteTransaction.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.removeTransaction('t2');
+    });
+    expect(result.current.snapshot?.splits).toHaveLength(0);
+  });
+
+  it('excluir o lançamento do acerto reabre a divisão', async () => {
+    const { result } = await comDivisoes([
+      divisao({ transactionId: undefined, settlementTransactionId: 't99', settledAt: '2024-05-24' }),
+    ]);
+    mockApi.deleteTransaction.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await result.current.removeTransaction('t99');
+    });
+    expect(result.current.snapshot?.splits[0]).toMatchObject({
+      settledAt: undefined,
+      settlementTransactionId: undefined,
+    });
   });
 });

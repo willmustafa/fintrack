@@ -217,7 +217,7 @@ describe('Nova transação', () => {
   it('marca a transação como recorrente', async () => {
     const create = jest.spyOn(api, 'createTransaction');
     await renderScreen(<TransacaoFormScreen />);
-    fireEvent(screen.getByRole('switch'), 'valueChange', true);
+    fireEvent(screen.getByLabelText('Recorrência'), 'valueChange', true);
     await digitarValor('5000');
     await salvar();
 
@@ -331,5 +331,169 @@ describe('Editar transação', () => {
   it('a tela de criar não oferece excluir', async () => {
     await renderScreen(<TransacaoFormScreen />);
     expect(screen.queryByText('Excluir transação')).toBeNull();
+  });
+});
+
+describe('Dividir a conta', () => {
+  const ligarDivisao = async () =>
+    fireEvent(screen.getByLabelText('Dividir com alguém'), 'valueChange', true);
+
+  it('só aparece em gastos', async () => {
+    await renderScreen(<TransacaoFormScreen />);
+    expect(screen.getByText('Dividir com alguém')).toBeOnTheScreen();
+
+    await userEvent.press(screen.getByText('Ganho'));
+    await waitFor(() => expect(screen.queryByText('Dividir com alguém')).toBeNull());
+  });
+
+  it('lista as pessoas cadastradas ao ligar a divisão', async () => {
+    await renderScreen(<TransacaoFormScreen />);
+    await ligarDivisao();
+
+    expect(await screen.findByText('João Pedro')).toBeOnTheScreen();
+    expect(screen.getByText('Camila')).toBeOnTheScreen();
+    expect(screen.getByText('Marque quem entrou na conta.')).toBeOnTheScreen();
+  });
+
+  it('marcar alguém racha o valor em partes iguais com você', async () => {
+    await renderScreen(<TransacaoFormScreen />);
+    await digitarValor('6000');
+    await ligarDivisao();
+    await userEvent.press(await screen.findByLabelText('João Pedro'));
+
+    expect(await screen.findByDisplayValue('30,00')).toBeOnTheScreen();
+    expect(screen.getByText('Sua parte: R$ 30,00 · a receber: R$ 30,00')).toBeOnTheScreen();
+  });
+
+  it('com duas pessoas a conta racha em três', async () => {
+    await renderScreen(<TransacaoFormScreen />);
+    await digitarValor('15630');
+    await ligarDivisao();
+    await userEvent.press(await screen.findByLabelText('João Pedro'));
+    await userEvent.press(screen.getByLabelText('Camila'));
+
+    expect(await screen.findAllByDisplayValue('52,10')).toHaveLength(2);
+    expect(screen.getByText('Sua parte: R$ 52,10 · a receber: R$ 104,20')).toBeOnTheScreen();
+  });
+
+  it('salva o gasto e a dívida de cada pessoa ligada a ele', async () => {
+    const criarDivisoes = jest.spyOn(api, 'createSplits');
+    await renderScreen(<TransacaoFormScreen />);
+
+    await digitarValor('6000');
+    await userEvent.type(screen.getByPlaceholderText('Adicionar'), 'Pizza');
+    await ligarDivisao();
+    await userEvent.press(await screen.findByLabelText('João Pedro'));
+    await salvar();
+
+    await waitFor(() =>
+      expect(criarDivisoes).toHaveBeenCalledWith([
+        {
+          ownerId: 'ana',
+          contactId: 'c1',
+          direction: 'a-receber',
+          description: 'Pizza',
+          amount: 30,
+          date: '2024-05-24',
+          transactionId: expect.any(String),
+        },
+      ]),
+    );
+  });
+
+  it('dá para ajustar a parte de cada um na mão', async () => {
+    const criarDivisoes = jest.spyOn(api, 'createSplits');
+    await renderScreen(<TransacaoFormScreen />);
+
+    await digitarValor('10000');
+    await ligarDivisao();
+    await userEvent.press(await screen.findByLabelText('João Pedro'));
+    fireEvent.changeText(screen.getByLabelText('Parte de João Pedro'), '2000');
+    await salvar();
+
+    await waitFor(() =>
+      expect(criarDivisoes).toHaveBeenCalledWith([expect.objectContaining({ amount: 20 })]),
+    );
+  });
+
+  it('não salva se as partes passarem do valor do gasto', async () => {
+    const criar = jest.spyOn(api, 'createTransaction');
+    await renderScreen(<TransacaoFormScreen />);
+
+    await digitarValor('5000');
+    await ligarDivisao();
+    await userEvent.press(await screen.findByLabelText('João Pedro'));
+    fireEvent.changeText(screen.getByLabelText('Parte de João Pedro'), '9000');
+
+    expect(
+      await screen.findByText('As partes somam mais que o valor do lançamento.'),
+    ).toBeOnTheScreen();
+    await salvar();
+    expect(criar).not.toHaveBeenCalled();
+  });
+
+  it('não salva com a divisão ligada e ninguém marcado', async () => {
+    const criar = jest.spyOn(api, 'createTransaction');
+    await renderScreen(<TransacaoFormScreen />);
+    await digitarValor('5000');
+    await ligarDivisao();
+    await salvar();
+
+    expect(criar).not.toHaveBeenCalled();
+  });
+
+  it('cadastra uma pessoa nova sem sair do formulário', async () => {
+    const criarPessoa = jest.spyOn(api, 'createContact');
+    await renderScreen(<TransacaoFormScreen />);
+
+    await digitarValor('4000');
+    await ligarDivisao();
+    await userEvent.type(await screen.findByPlaceholderText('Adicionar pessoa'), 'Bruna');
+    await userEvent.press(screen.getByLabelText('Adicionar pessoa'));
+
+    await waitFor(() =>
+      expect(criarPessoa).toHaveBeenCalledWith({ name: 'Bruna', initial: 'B', ownerId: 'ana' }),
+    );
+    // Entra já marcada no rateio: R$ 40 entre você e ela.
+    expect(await screen.findByDisplayValue('20,00')).toBeOnTheScreen();
+  });
+
+  it('editar um gasto já dividido abre com as pessoas marcadas', async () => {
+    setRouteParams({ id: 't2' });
+    await renderScreen(<TransacaoFormScreen />);
+
+    expect(screen.getAllByDisplayValue('52,10')).toHaveLength(2);
+    expect(screen.getByText('Sua parte: R$ 52,10 · a receber: R$ 104,20')).toBeOnTheScreen();
+  });
+
+  it('salvar a edição regrava as divisões pendentes do lançamento', async () => {
+    const apagar = jest.spyOn(api, 'deleteSplit');
+    const criarDivisoes = jest.spyOn(api, 'createSplits');
+
+    setRouteParams({ id: 't2' });
+    await renderScreen(<TransacaoFormScreen />);
+    await userEvent.press(screen.getByLabelText('Camila'));
+    await salvar();
+
+    await waitFor(() => expect(apagar).toHaveBeenCalledTimes(2));
+    expect(apagar.mock.calls.map(([splitId]) => splitId)).toEqual(['sp1', 'sp2']);
+    await waitFor(() =>
+      expect(criarDivisoes).toHaveBeenCalledWith([
+        expect.objectContaining({ contactId: 'c1', amount: 78.15 }),
+      ]),
+    );
+  });
+
+  it('desligar a divisão apaga as dívidas pendentes do lançamento', async () => {
+    const apagar = jest.spyOn(api, 'deleteSplit');
+    const criarDivisoes = jest.spyOn(api, 'createSplits');
+
+    setRouteParams({ id: 't2' });
+    await renderScreen(<TransacaoFormScreen />);
+    fireEvent(screen.getByLabelText('Dividir com alguém'), 'valueChange', false);
+    await salvar();
+
+    await waitFor(() => expect(apagar).toHaveBeenCalledTimes(2));
+    expect(criarDivisoes).not.toHaveBeenCalled();
   });
 });

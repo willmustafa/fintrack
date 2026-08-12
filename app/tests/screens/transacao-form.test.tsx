@@ -1,15 +1,17 @@
-import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
-import NovaTransacaoScreen from '@/app/transacao/nova';
+import TransacaoFormScreen from '@/app/transacao/[id]';
 import { api } from '@/services/api';
 
-import { resetRouter, router } from '../helpers/router';
+import { resetRouter, router, setRouteParams } from '../helpers/router';
 import { renderScreen } from '../helpers/screen';
 
 jest.mock('expo-router', () => require('../helpers/router').expoRouterMock);
 
 beforeEach(() => {
   resetRouter();
+  setRouteParams({ id: 'nova' });
   jest.restoreAllMocks();
 });
 
@@ -23,7 +25,7 @@ const salvar = () => userEvent.press(screen.getByLabelText('Salvar'));
 
 describe('Nova transação', () => {
   it('abre no tipo Gasto com os padrões do formulário', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     expect(screen.getByText('Nova transação')).toBeOnTheScreen();
     expect(screen.getByDisplayValue('0,00')).toBeOnTheScreen();
     expect(screen.getByText('Conta corrente conjunta')).toBeOnTheScreen();
@@ -33,21 +35,21 @@ describe('Nova transação', () => {
   });
 
   it('formata o valor digitado em reais', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await digitarValor('15630');
     expect(screen.getByDisplayValue('156,30')).toBeOnTheScreen();
   });
 
   it('não salva com valor zerado', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await salvar();
     expect(create).not.toHaveBeenCalled();
   });
 
   it('salva um gasto com os dados do formulário', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
 
     await digitarValor('15630');
     await userEvent.type(screen.getByPlaceholderText('Adicionar'), 'Mercado');
@@ -70,7 +72,7 @@ describe('Nova transação', () => {
 
   it('sem descrição usa a categoria como descrição', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await digitarValor('1000');
     await salvar();
 
@@ -80,14 +82,14 @@ describe('Nova transação', () => {
   });
 
   it('fecha a tela depois de salvar', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await digitarValor('1000');
     await salvar();
     await waitFor(() => expect(router.back).toHaveBeenCalled());
   });
 
   it('trocar o tipo troca a categoria padrão', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Ganho'));
     await waitFor(() => expect(screen.getByText('Receita')).toBeOnTheScreen());
     expect(screen.queryByText('Essenciais')).toBeNull();
@@ -95,7 +97,7 @@ describe('Nova transação', () => {
 
   it('salva um ganho', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Ganho'));
     await digitarValor('420000');
     await salvar();
@@ -109,7 +111,7 @@ describe('Nova transação', () => {
 
   it('salva um aporte', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Aporte'));
     await digitarValor('30000');
     await salvar();
@@ -122,7 +124,7 @@ describe('Nova transação', () => {
   });
 
   it('transferência revela o campo de destino', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     expect(screen.queryByText('Destino')).toBeNull();
 
     await userEvent.press(screen.getByText('Transf.'));
@@ -132,7 +134,7 @@ describe('Nova transação', () => {
 
   it('transferência envia a conta de destino', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Transf.'));
     await digitarValor('50000');
     await salvar();
@@ -149,7 +151,7 @@ describe('Nova transação', () => {
   });
 
   it('o picker de destino não oferece a conta de origem', async () => {
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Transf.'));
     await userEvent.press(await screen.findByText('Destino'));
 
@@ -162,7 +164,7 @@ describe('Nova transação', () => {
 
   it('troca a conta pelo picker', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Conta corrente conjunta'));
     await userEvent.press(await screen.findByText('Nubank (casal)'));
     await digitarValor('5000');
@@ -175,7 +177,7 @@ describe('Nova transação', () => {
 
   it('troca a categoria pelo picker', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Essenciais'));
     await userEvent.press(await screen.findByText('Lazer'));
     await digitarValor('5000');
@@ -188,7 +190,7 @@ describe('Nova transação', () => {
 
   it('troca a data pelo picker de dias recentes', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('24/05/2024'));
     await userEvent.press(await screen.findByText('Ontem'));
     await digitarValor('5000');
@@ -201,7 +203,7 @@ describe('Nova transação', () => {
 
   it('troca quem pagou', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByText('Ana'));
     await userEvent.press(await screen.findByText('Casal (compartilhado)'));
     await digitarValor('5000');
@@ -214,7 +216,7 @@ describe('Nova transação', () => {
 
   it('marca a transação como recorrente', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     fireEvent(screen.getByRole('switch'), 'valueChange', true);
     await digitarValor('5000');
     await salvar();
@@ -226,7 +228,7 @@ describe('Nova transação', () => {
 
   it('o X fecha sem salvar', async () => {
     const create = jest.spyOn(api, 'createTransaction');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await userEvent.press(screen.getByLabelText('Fechar'));
     expect(router.back).toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
@@ -234,7 +236,7 @@ describe('Nova transação', () => {
 
   it('erro do backend aparece na tela e o formulário continua aberto', async () => {
     jest.spyOn(api, 'createTransaction').mockRejectedValue(new Error('Saldo insuficiente.'));
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await digitarValor('5000');
     await salvar();
 
@@ -245,10 +247,89 @@ describe('Nova transação', () => {
 
   it('erro sem mensagem cai no texto genérico', async () => {
     jest.spyOn(api, 'createTransaction').mockRejectedValue('pane');
-    await renderScreen(<NovaTransacaoScreen />);
+    await renderScreen(<TransacaoFormScreen />);
     await digitarValor('5000');
     await salvar();
 
     expect(await screen.findByText('Não foi possível salvar a transação.')).toBeOnTheScreen();
+  });
+});
+
+describe('Editar transação', () => {
+  /** `t2` do seed: gasto de R$ 156,30 em Essenciais, no Nubank, pago pelo casal. */
+  const abrirT2 = async () => {
+    setRouteParams({ id: 't2' });
+    await renderScreen(<TransacaoFormScreen />);
+  };
+
+  it('abre com os dados do lançamento preenchidos', async () => {
+    await abrirT2();
+    expect(screen.getByText('Editar transação')).toBeOnTheScreen();
+    expect(screen.getByDisplayValue('156,30')).toBeOnTheScreen();
+    expect(screen.getByDisplayValue('Mercado')).toBeOnTheScreen();
+    expect(screen.getByText('Nubank (casal)')).toBeOnTheScreen();
+    expect(screen.getByText('Essenciais')).toBeOnTheScreen();
+    expect(screen.getByText('Casal (compartilhado)')).toBeOnTheScreen();
+  });
+
+  it('salvar manda o id e os campos alterados', async () => {
+    const update = jest.spyOn(api, 'updateTransaction');
+    await abrirT2();
+
+    await userEvent.press(screen.getByText('Essenciais'));
+    await userEvent.press(await screen.findByText('Lazer'));
+    await salvar();
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update.mock.calls[0][0]).toBe('t2');
+    expect(update.mock.calls[0][1]).toMatchObject({
+      description: 'Mercado',
+      amount: 156.3,
+      category: 'Lazer',
+      accountId: 'nubank',
+    });
+  });
+
+  it('oferece a data original mesmo fora dos dias recentes', async () => {
+    // `t15` é de 03/05, anterior à janela de 14 dias a partir de 24/05.
+    setRouteParams({ id: 't15' });
+    await renderScreen(<TransacaoFormScreen />);
+    await userEvent.press(screen.getByText('03/05/2024'));
+
+    const opcoes = await screen.findAllByText('03/05/2024');
+    // Uma no formulário e outra como opção selecionável no picker.
+    expect(opcoes).toHaveLength(2);
+  });
+
+  it('excluir pede confirmação antes', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await abrirT2();
+    await userEvent.press(screen.getByText('Excluir transação'));
+
+    expect(alert).toHaveBeenCalledWith(
+      'Excluir transação?',
+      expect.stringContaining('Mercado'),
+      expect.arrayContaining([expect.objectContaining({ text: 'Excluir' })]),
+    );
+  });
+
+  it('confirmar a exclusão chama a API e fecha a tela', async () => {
+    const remove = jest.spyOn(api, 'deleteTransaction');
+    let confirmar: (() => void) | undefined;
+    jest.spyOn(Alert, 'alert').mockImplementation((_titulo, _msg, botoes) => {
+      confirmar = botoes?.find((botao) => botao.text === 'Excluir')?.onPress;
+    });
+
+    await abrirT2();
+    await userEvent.press(screen.getByText('Excluir transação'));
+    await act(async () => confirmar?.());
+
+    expect(remove).toHaveBeenCalledWith('t2');
+    await waitFor(() => expect(router.back).toHaveBeenCalled());
+  });
+
+  it('a tela de criar não oferece excluir', async () => {
+    await renderScreen(<TransacaoFormScreen />);
+    expect(screen.queryByText('Excluir transação')).toBeNull();
   });
 });

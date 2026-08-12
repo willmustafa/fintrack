@@ -1,6 +1,7 @@
 import * as seed from '@/data/seed';
 import {
   REFERENCE_MONTH,
+  applyTransaction,
   budgetSlices,
   budgetTargets,
   consolidatedBalance,
@@ -102,6 +103,71 @@ describe('openInvoices', () => {
 
   it('lista sem cartões dá zero', () => {
     expect(openInvoices([account()])).toBe(0);
+  });
+});
+
+describe('applyTransaction', () => {
+  const corrente = account({ id: 'corrente', balance: 1000 });
+  const poupanca = account({ id: 'poupanca', kind: 'poupanca', balance: 500 });
+  const cartao = account({ id: 'nubank', kind: 'cartao', balance: 0, invoice: 800 });
+  const contas = [corrente, poupanca, cartao];
+
+  const saldo = (lista: Account[], id: string) => lista.find((a) => a.id === id)!.balance;
+  const fatura = (lista: Account[], id: string) => lista.find((a) => a.id === id)!.invoice;
+
+  it('gasto desconta do saldo e desfazer devolve', () => {
+    const depois = applyTransaction(contas, tx({ amount: 250 }), 1);
+    expect(saldo(depois, 'corrente')).toBe(750);
+    expect(saldo(applyTransaction(depois, tx({ amount: 250 }), -1), 'corrente')).toBe(1000);
+  });
+
+  it('ganho soma no saldo', () => {
+    expect(saldo(applyTransaction(contas, tx({ kind: 'ganho', amount: 200 }), 1), 'corrente')).toBe(
+      1200,
+    );
+  });
+
+  it('aporte sai do saldo', () => {
+    expect(saldo(applyTransaction(contas, tx({ kind: 'aporte', amount: 300 }), 1), 'corrente')).toBe(
+      700,
+    );
+  });
+
+  it('gasto no cartão mexe na fatura, não no saldo', () => {
+    const depois = applyTransaction(contas, tx({ accountId: 'nubank', amount: 150 }), 1);
+    expect(fatura(depois, 'nubank')).toBe(950);
+    expect(saldo(depois, 'nubank')).toBe(0);
+  });
+
+  it('desfazer um gasto de cartão abate a fatura', () => {
+    const lancamento = tx({ accountId: 'nubank', amount: 150 });
+    expect(fatura(applyTransaction(contas, lancamento, -1), 'nubank')).toBe(650);
+  });
+
+  it('ganho lançado num cartão não altera nada', () => {
+    const depois = applyTransaction(contas, tx({ kind: 'ganho', accountId: 'nubank' }), 1);
+    expect(fatura(depois, 'nubank')).toBe(800);
+    expect(saldo(depois, 'nubank')).toBe(0);
+  });
+
+  it('transferência tira da origem e põe no destino', () => {
+    const depois = applyTransaction(
+      contas,
+      tx({ kind: 'transferencia', amount: 200, toAccountId: 'poupanca' }),
+      1,
+    );
+    expect(saldo(depois, 'corrente')).toBe(800);
+    expect(saldo(depois, 'poupanca')).toBe(700);
+  });
+
+  it('não toca nas contas fora do lançamento', () => {
+    const depois = applyTransaction(contas, tx(), 1);
+    expect(saldo(depois, 'poupanca')).toBe(500);
+  });
+
+  it('cartão sem fatura parte do zero', () => {
+    const semFatura = [account({ id: 'novo', kind: 'cartao' })];
+    expect(fatura(applyTransaction(semFatura, tx({ accountId: 'novo' }), 1), 'novo')).toBe(100);
   });
 });
 

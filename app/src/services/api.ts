@@ -223,6 +223,27 @@ export const api = {
     });
   },
 
+  async updateTransaction(
+    transactionId: string,
+    input: Omit<Transaction, 'id'>,
+  ): Promise<Transaction> {
+    if (isMockMode) {
+      return latency({ ...input, id: transactionId }, 120);
+    }
+    return request<Transaction>(`/transactions/${transactionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async deleteTransaction(transactionId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>(`/transactions/${transactionId}`, { method: 'DELETE' });
+  },
+
   async chooseGoalQuote(goalId: string, quoteId: string): Promise<Goal> {
     if (isMockMode) {
       const goal = seed.goals.find((g) => g.id === goalId)!;

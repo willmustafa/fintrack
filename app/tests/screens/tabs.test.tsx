@@ -179,6 +179,12 @@ describe('Transações', () => {
     await userEvent.press(screen.getByLabelText('Nova transação'));
     expect(router.push).toHaveBeenCalledWith('/transacao/nova');
   });
+
+  it('tocar numa transação abre a edição dela', async () => {
+    await renderScreen(<TransacoesScreen />);
+    await userEvent.press(screen.getByText('Mercado'));
+    expect(router.push).toHaveBeenCalledWith('/transacao/t2');
+  });
 });
 
 describe('Cartões e contas', () => {

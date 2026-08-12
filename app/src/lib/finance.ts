@@ -25,6 +25,34 @@ export const signedAmount = (t: Transaction): number => signOf(t) * t.amount;
 
 export const isInMonth = (iso: string, month: string) => iso.startsWith(month);
 
+/**
+ * Aplica o efeito de um lançamento nos saldos e faturas.
+ *
+ * `direction` 1 lança e -1 desfaz — é o que permite editar (desfaz o antigo,
+ * aplica o novo) e excluir sem recarregar o snapshot inteiro.
+ */
+export function applyTransaction(
+  accounts: Account[],
+  transaction: Transaction,
+  direction: 1 | -1,
+): Account[] {
+  return accounts.map((account) => {
+    // Destino da transferência recebe o valor
+    if (account.id === transaction.toAccountId) {
+      return { ...account, balance: account.balance + direction * transaction.amount };
+    }
+    if (account.id !== transaction.accountId) return account;
+    // Gasto no cartão vai para a fatura, não para um saldo
+    if (account.kind === 'cartao') {
+      return transaction.kind === 'gasto'
+        ? { ...account, invoice: (account.invoice ?? 0) + direction * transaction.amount }
+        : account;
+    }
+    const delta = transaction.kind === 'ganho' ? transaction.amount : -transaction.amount;
+    return { ...account, balance: account.balance + direction * delta };
+  });
+}
+
 export function consolidatedBalance(accounts: Account[]): number {
   return accounts
     .filter((a) => a.kind !== 'cartao')

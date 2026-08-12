@@ -188,6 +188,23 @@ describe('transações', () => {
     expect(created).toMatchObject(input);
     expect(created.id).toMatch(/^t\d+$/);
   });
+
+  it('updateTransaction devolve o input com o id preservado', async () => {
+    const saved = await api.updateTransaction('t2', {
+      kind: 'gasto',
+      description: 'Mercado grande',
+      amount: 200,
+      category: 'Essenciais',
+      accountId: 'nubank',
+      date: '2024-05-24',
+      ownerId: 'casal',
+    });
+    expect(saved).toMatchObject({ id: 't2', description: 'Mercado grande', amount: 200 });
+  });
+
+  it('deleteTransaction resolve sem erro', async () => {
+    await expect(api.deleteTransaction('t2')).resolves.toBeUndefined();
+  });
 });
 
 describe('metas', () => {

@@ -257,6 +257,32 @@ describe('POST /transactions', () => {
   });
 });
 
+describe('/transactions/:id', () => {
+  const input: Omit<Transaction, 'id'> = {
+    kind: 'gasto',
+    description: 'Mercado',
+    amount: 200,
+    category: 'Essenciais',
+    accountId: 'nubank',
+    date: '2024-05-24',
+    ownerId: 'casal',
+  };
+
+  it('PUT edita a transação', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ...input, id: 't2' }));
+    await expect(api.updateTransaction('t2', input)).resolves.toMatchObject({ id: 't2' });
+    const call = lastCall();
+    expect(call).toMatchObject({ url: `${BASE}/transactions/t2`, method: 'PUT', body: input });
+    expect(call.body).not.toHaveProperty('id');
+  });
+
+  it('DELETE exclui e aceita 204 sem corpo', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 204, statusText: 'No Content' });
+    await expect(api.deleteTransaction('t2')).resolves.toBeUndefined();
+    expect(lastCall()).toMatchObject({ url: `${BASE}/transactions/t2`, method: 'DELETE' });
+  });
+});
+
 describe('POST /goals/:id/quote', () => {
   it('envia o id do orçamento escolhido', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ id: 'g4', target: 3200 }));

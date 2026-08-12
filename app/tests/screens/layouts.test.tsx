@@ -47,7 +47,8 @@ import TabsLayout, { unstable_settings as tabsSettings } from '@/app/(tabs)/_lay
 
 const PROTEGIDAS = [
   '(tabs)',
-  'transacao/nova',
+  'transacao/[id]',
+  'conta/[id]',
   'metas/index',
   'metas/[id]',
   'financiamento/index',

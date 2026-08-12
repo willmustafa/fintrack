@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 
-import { Donut, LineChart, MiniBars, PairedBars } from '@/components/charts';
+import { Donut, LineChart, MiniBars, NetBars, PairedBars } from '@/components/charts';
 import { colors } from '@/theme/tokens';
 
 const styleOf = (node: { props: { style?: unknown } }) =>
@@ -155,5 +155,62 @@ describe('LineChart', () => {
     await render(<LineChart values={values} height={200} />);
     const svg = screen.container.queryAll((n) => n.props.vbHeight === 200);
     expect(svg.length).toBe(1);
+  });
+});
+
+describe('NetBars', () => {
+  const semanas = [
+    { label: 'S1', net: 500 },
+    { label: 'S2', net: -200 },
+    { label: 'S3', net: 900 },
+  ];
+
+  const cores = () =>
+    screen.container
+      .queryAll((node) => typeof styleOf(node as never).backgroundColor === 'string')
+      .map((node) => styleOf(node as never).backgroundColor as string);
+
+  it('mostra o rótulo de cada período', async () => {
+    await render(<NetBars data={semanas} />);
+    expect(screen.getByText('S1')).toBeOnTheScreen();
+    expect(screen.getByText('S2')).toBeOnTheScreen();
+    expect(screen.getByText('S3')).toBeOnTheScreen();
+  });
+
+  it('pinta a sobra de verde e o déficit de vermelho', async () => {
+    await render(<NetBars data={semanas} />);
+    expect(cores()).toContain(colors.income);
+    expect(cores()).toContain(colors.expense);
+  });
+
+  it('só usa verde quando toda semana fechou no positivo', async () => {
+    await render(<NetBars data={[{ label: 'S1', net: 100 }]} />);
+    expect(cores()).not.toContain(colors.expense);
+  });
+
+  it('a barra maior em módulo é a mais longa', async () => {
+    await render(<NetBars data={semanas} height={80} />);
+    // 40 de meia altura menos os 4 de folga: a de 900 ocupa o máximo.
+    expect(Math.max(...alturas())).toBe(80);
+    expect(alturas()).toContain(36);
+  });
+
+  it('semana zerada ainda desenha um traço visível', async () => {
+    await render(<NetBars data={[{ label: 'S1', net: 0 }, { label: 'S2', net: 400 }]} />);
+    expect(alturas()).toContain(3);
+  });
+
+  it('desenha a linha do zero', async () => {
+    await render(<NetBars data={semanas} height={80} />);
+    const linha = screen.container.queryAll(
+      (node) => styleOf(node as never).backgroundColor === colors.borderStrong,
+    );
+    expect(linha).toHaveLength(1);
+    expect(styleOf(linha[0] as never).top).toBe(40);
+  });
+
+  it('lista vazia não quebra', async () => {
+    await render(<NetBars data={[]} />);
+    expect(alturas()).not.toContain(NaN);
   });
 });

@@ -83,7 +83,7 @@ src/
 | Tela            | Variação implementada                                                    |
 | --------------- | ------------------------------------------------------------------------ |
 | Auth            | V2 — hero roxo + bottom-sheet; cadastro em tela própria                   |
-| Início          | V1 — saldo consolidado, 50/30/20, receitas × gastos, atalhos              |
+| Início          | Saldo consolidado, números do mês no topo, sobra por semana, orçamento 50/30/20, metas quase concluídas e prazo do financiamento |
 | Transações      | V1 — busca, filtros e agrupamento por dia, com o resumo entradas/saídas da V2 |
 | Nova transação  | V1 — tipo em abas, valor, conta, categoria, data, pago por, recorrência; a mesma tela edita e exclui um lançamento existente |
 | Investimentos   | V1 (blocos por classe) + gráfico de evolução da V2                        |

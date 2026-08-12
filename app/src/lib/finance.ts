@@ -4,8 +4,9 @@
  * agregados prontos, basta trocar as chamadas por campos da API.
  */
 
+import { parseMonthLong } from '@/lib/format';
 import { colors } from '@/theme/tokens';
-import type { Account, BudgetSlice, Goal, Investment, Transaction } from '@/types';
+import type { Account, BudgetSlice, Goal, Investment, Loan, Transaction } from '@/types';
 
 export const REFERENCE_MONTH = '2024-05';
 
@@ -145,6 +146,34 @@ export const investmentYield = (investment: Investment): number =>
 
 export const goalProgress = (goal: Goal): number =>
   goal.target && goal.target > 0 ? Math.min(goal.saved / goal.target, 1) : 0;
+
+/**
+ * Metas mais próximas de concluir, da mais adiantada para a menos.
+ * Fica de fora quem ainda não tem alvo (depende de orçamento) e quem já fechou.
+ */
+export function goalsClosestToDone(goals: Goal[], limit = 3): Goal[] {
+  return goals
+    .filter((goal) => goal.target !== undefined && goal.target > 0 && goal.saved < goal.target)
+    .sort((a, b) => goalProgress(b) - goalProgress(a))
+    .slice(0, limit);
+}
+
+/** Meses de `fromMonth` até `toMonth` (`YYYY-MM`); nunca negativo. */
+export function monthsBetween(fromMonth: string, toMonth: string): number {
+  const [fromYear, from] = fromMonth.split('-').map(Number);
+  const [toYear, to] = toMonth.split('-').map(Number);
+  return Math.max((toYear - fromYear) * 12 + (to - from), 0);
+}
+
+/** Quantos meses faltam para quitar — `payoffDate` chega como `mar/2044`. */
+export function monthsToPayoff(loan: Loan, fromMonth = REFERENCE_MONTH): number {
+  const payoff = parseMonthLong(loan.payoffDate);
+  return payoff ? monthsBetween(fromMonth, payoff) : 0;
+}
+
+/** Fatia já quitada do financiamento, de 0 a 1. */
+export const loanPaidRatio = (loan: Loan): number =>
+  loan.total > 0 ? (loan.total - loan.balance) / loan.total : 0;
 
 export function groupByDay(transactions: Transaction[]): [string, Transaction[]][] {
   const map = new Map<string, Transaction[]>();

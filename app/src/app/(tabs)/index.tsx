@@ -3,20 +3,29 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { Donut, MiniBars, PairedBars } from '@/components/charts';
+import { MiniBars, NetBars } from '@/components/charts';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { Card, Fab, ProgressBar } from '@/components/ui';
 import { balanceSeries, weeklySummary } from '@/data/seed';
 import {
-  REFERENCE_MONTH,
   budgetSlices,
   consolidatedBalance,
+  goalProgress,
+  goalsClosestToDone,
+  loanPaidRatio,
   monthIncome,
   monthOutflow,
+  monthsToPayoff,
   openInvoices,
 } from '@/lib/finance';
-import { formatCurrency, formatCurrencyShort, formatPercent, monthNameOf } from '@/lib/format';
+import {
+  formatCurrency,
+  formatCurrencyShort,
+  formatMonthSpan,
+  formatPercent,
+  formatSigned,
+} from '@/lib/format';
 import { useCurrentPerson, useSnapshot } from '@/store/fintrack-store';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -24,19 +33,27 @@ import { colors, radius, spacing } from '@/theme/tokens';
 export default function DashboardScreen() {
   const router = useRouter();
   const person = useCurrentPerson();
-  const { accounts, transactions, goals } = useSnapshot();
+  const { accounts, transactions, goals, loans } = useSnapshot();
 
   const balance = consolidatedBalance(accounts);
   const invoices = openInvoices(accounts);
   const outflow = monthOutflow(transactions);
   const income = monthIncome(transactions);
   const slices = useMemo(() => budgetSlices(transactions), [transactions]);
-  const slicesTotal = slices.reduce((sum, slice) => sum + slice.amount, 0) || 1;
 
   const previous = balanceSeries[balanceSeries.length - 2] ?? balance;
   const growth = previous === 0 ? 0 : ((balance - previous) / previous) * 100;
   const cashAccounts = accounts.filter((account) => account.kind !== 'cartao').length;
-  const openGoals = goals.filter((goal) => goal.target && goal.saved < goal.target).length;
+
+  /** Quanto sobrou no mês e como isso se distribuiu pelas semanas. */
+  const leftover = income - outflow;
+  const weeklyNet = useMemo(
+    () => weeklySummary.map((week) => ({ label: week.label, net: week.income - week.expense })),
+    [],
+  );
+
+  const nextGoals = useMemo(() => goalsClosestToDone(goals), [goals]);
+  const loan = loans[0];
 
   return (
     <Screen>
@@ -107,88 +124,54 @@ export default function DashboardScreen() {
           <MiniBars values={balanceSeries} height={34} />
         </Card>
 
-        {/* 50/30/20 */}
-        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
-          <Donut
-            slices={slices.map((slice) => ({ value: slice.amount, color: slice.color }))}
-            centerTop={monthNameOf(REFERENCE_MONTH)}
-            centerBottom="50/30/20"
+        {/* Números do mês, logo no topo */}
+        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+          <StatTile
+            label="Receitas"
+            value={formatCurrencyShort(income)}
+            color={colors.income}
+            onPress={() => router.push('/transacoes')}
           />
-          <View style={{ flex: 1 }}>
-            <Text weight="extrabold" size="small" style={{ marginBottom: spacing.sm }}>
-              Divisão de gastos
-            </Text>
-            {slices.map((slice) => (
-              <View
-                key={slice.key}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: 3,
-                }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View
-                    style={{
-                      width: 9,
-                      height: 9,
-                      borderRadius: 3,
-                      backgroundColor: slice.color,
-                    }}
-                  />
-                  <Text size="caption" color={colors.textBody}>
-                    {slice.label}
-                  </Text>
-                </View>
-                <Text size="caption" weight="bold">
-                  {Math.round((slice.amount / slicesTotal) * 100)}%
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Card>
+          <StatTile
+            label="Gasto do mês"
+            value={formatCurrencyShort(outflow)}
+            color={colors.expense}
+            onPress={() => router.push('/transacoes')}
+          />
+          <StatTile
+            label="Faturas"
+            value={formatCurrencyShort(invoices)}
+            onPress={() => router.push('/cartoes')}
+          />
+        </View>
 
-        {/* Receitas × gastos */}
+        {/* Sobra do mês — a barra fica acima ou abaixo do zero em cada semana */}
         <Card>
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'center',
+              alignItems: 'baseline',
               justifyContent: 'space-between',
-              marginBottom: spacing.md,
+              marginBottom: spacing.lg,
             }}>
-            <Text weight="extrabold" size="small">
-              Receitas × Gastos
-            </Text>
-            <View style={{ flexDirection: 'row', gap: spacing.md }}>
-              <Legend color={colors.income} label="Receita" />
-              <Legend color={colors.expense} label="Gasto" />
+            <View>
+              <Text size="tiny" color={colors.textSecondary}>
+                {leftover >= 0 ? 'Sobrou no mês' : 'Faltou no mês'}
+              </Text>
+              <Text
+                weight="extrabold"
+                size="heading"
+                color={leftover >= 0 ? colors.income : colors.expense}
+                style={{ marginTop: 2 }}>
+                {formatSigned(leftover, 0)}
+              </Text>
             </View>
-          </View>
-          <PairedBars data={weeklySummary} />
-        </Card>
-
-        {/* Atalhos numéricos */}
-        <View style={{ flexDirection: 'row', gap: spacing.md }}>
-          <Card
-            style={{ flex: 1, backgroundColor: colors.accentSoft, borderColor: colors.accentSoft }}
-            onPress={() => router.push('/cartoes')}>
-            <Text size="tiny" color={colors.textBody}>
-              Faturas abertas
-            </Text>
-            <Text weight="extrabold" size="title" style={{ marginTop: 3 }}>
-              {formatCurrencyShort(invoices)}
-            </Text>
-          </Card>
-          <Card style={{ flex: 1 }} onPress={() => router.push('/transacoes')}>
             <Text size="tiny" color={colors.textSecondary}>
-              Gasto do mês
+              por semana
             </Text>
-            <Text weight="extrabold" size="title" color={colors.expense} style={{ marginTop: 3 }}>
-              {formatCurrencyShort(outflow)}
-            </Text>
-          </Card>
-        </View>
+          </View>
+          <NetBars data={weeklyNet} />
+        </Card>
 
         {/* Orçamento do mês sobre a receita */}
         <Card>
@@ -230,24 +213,82 @@ export default function DashboardScreen() {
           </View>
         </Card>
 
-        <View style={{ flexDirection: 'row', gap: spacing.md }}>
-          <Card style={{ flex: 1 }} onPress={() => router.push('/metas')}>
-            <Text size="tiny" color={colors.textSecondary}>
-              Metas em andamento
-            </Text>
-            <Text weight="extrabold" size="title" style={{ marginTop: 3 }}>
-              {openGoals}
-            </Text>
+        {/* Metas mais perto de fechar */}
+        {nextGoals.length > 0 ? (
+          <Card onPress={() => router.push('/metas')}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: spacing.md,
+              }}>
+              <Text weight="extrabold" size="small">
+                Quase lá
+              </Text>
+              <Text size="tiny" color={colors.textSecondary}>
+                Ver todas
+              </Text>
+            </View>
+            <View style={{ gap: spacing.md }}>
+              {nextGoals.map((goal) => {
+                const progress = goalProgress(goal);
+                return (
+                  <View key={goal.id} style={{ gap: 5 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text size="caption" color={colors.textBody} numberOfLines={1} style={{ flex: 1 }}>
+                        {goal.name}
+                      </Text>
+                      <Text size="caption" weight="bold" color={colors.textSecondary}>
+                        {Math.round(progress * 100)}%
+                      </Text>
+                    </View>
+                    <ProgressBar progress={progress} height={7} />
+                    <Text size="micro" color={colors.textMuted}>
+                      {formatCurrencyShort(goal.saved)} de {formatCurrencyShort(goal.target ?? 0)} ·
+                      faltam {formatCurrencyShort((goal.target ?? 0) - goal.saved)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
           </Card>
-          <Card style={{ flex: 1 }} onPress={() => router.push('/financiamento')}>
-            <Text size="tiny" color={colors.textSecondary}>
-              Financiamento
-            </Text>
-            <Text weight="extrabold" size="title" style={{ marginTop: 3 }}>
-              30,6%
-            </Text>
+        ) : null}
+
+        {/* Financiamento: o que interessa é quanto tempo ainda falta */}
+        {loan ? (
+          <Card onPress={() => router.push('/financiamento')}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                marginBottom: spacing.md,
+              }}>
+              <Text weight="extrabold" size="small">
+                Financiamento
+              </Text>
+              <Text size="tiny" color={colors.textSecondary}>
+                {formatPercent(loanPaidRatio(loan) * 100, 1).replace('+', '')} quitado
+              </Text>
+            </View>
+            <ProgressBar progress={loanPaidRatio(loan)} height={7} />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                gap: 6,
+                marginTop: spacing.md,
+              }}>
+              <Text weight="extrabold" size="title">
+                {monthsToPayoff(loan)}
+              </Text>
+              <Text size="caption" color={colors.textSecondary}>
+                meses até quitar · {formatMonthSpan(monthsToPayoff(loan))}
+              </Text>
+            </View>
           </Card>
-        </View>
+        ) : null}
       </ScrollView>
 
       <Fab onPress={() => router.push('/transacao/nova')} bottom={24} />
@@ -255,13 +296,26 @@ export default function DashboardScreen() {
   );
 }
 
-function Legend({ color, label }: { color: string; label: string }) {
+/** Número do mês no topo do painel — o valor é o gráfico. */
+function StatTile({
+  label,
+  value,
+  color,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  onPress: () => void;
+}) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color }} />
-      <Text size="micro" color={colors.textSecondary}>
+    <Card style={{ flex: 1, paddingHorizontal: spacing.md }} onPress={onPress}>
+      <Text size="micro" color={colors.textSecondary} numberOfLines={1}>
         {label}
       </Text>
-    </View>
+      <Text weight="extrabold" size="body" color={color} style={{ marginTop: 3 }}>
+        {value}
+      </Text>
+    </Card>
   );
 }

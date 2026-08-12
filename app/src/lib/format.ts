@@ -74,6 +74,26 @@ export function formatMonthLong(isoMonth: string): string {
   return `${MONTHS_SHORT[Number(month) - 1]}/${year}`;
 }
 
+/** `dez/2024` → `2024-12` (inverso de `formatMonthLong`); `null` se não reconhecer. */
+export function parseMonthLong(label: string): string | null {
+  const [month, year] = label.split('/').map((part) => part.trim());
+  const index = MONTHS_SHORT.indexOf(month?.toLowerCase() ?? '');
+  if (index < 0 || !/^\d{4}$/.test(year ?? '')) return null;
+  return `${year}-${String(index + 1).padStart(2, '0')}`;
+}
+
+/** `238` → `19 anos e 10 meses`; abaixo de um ano fica só em meses. */
+export function formatMonthSpan(months: number): string {
+  if (months <= 0) return 'quitado';
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const yearLabel = years === 1 ? '1 ano' : `${years} anos`;
+  const monthLabel = rest === 1 ? '1 mês' : `${rest} meses`;
+  if (years === 0) return monthLabel;
+  if (rest === 0) return yearLabel;
+  return `${yearLabel} e ${monthLabel}`;
+}
+
 const MONTH_NAMES = [
   'Janeiro',
   'Fevereiro',

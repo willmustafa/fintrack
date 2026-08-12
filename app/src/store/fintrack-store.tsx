@@ -9,10 +9,11 @@ import {
   type ReactNode,
 } from 'react';
 
-import { applyTransaction } from '@/lib/finance';
+import { applyTransaction, splitLedger, type LedgerEntry } from '@/lib/finance';
 import { api, type Snapshot } from '@/services/api';
 import type {
   Account,
+  Contact,
   Goal,
   Invite,
   MemberAccess,
@@ -20,6 +21,7 @@ import type {
   Preferences,
   ProfileInput,
   Session,
+  Split,
   Transaction,
 } from '@/types';
 
@@ -52,6 +54,18 @@ type Store = State & {
   removeAccount: (accountId: string) => Promise<void>;
   resendInvite: (inviteId: string) => Promise<void>;
   cancelInvite: (inviteId: string) => Promise<void>;
+  /** Divisão de contas: pessoas cadastradas e dívidas */
+  addContact: (input: Omit<Contact, 'id'>) => Promise<Contact>;
+  saveContact: (contactId: string, input: Omit<Contact, 'id'>) => Promise<Contact>;
+  removeContact: (contactId: string) => Promise<void>;
+  addSplits: (inputs: Omit<Split, 'id'>[]) => Promise<Split[]>;
+  replaceTransactionSplits: (
+    transactionId: string,
+    inputs: Omit<Split, 'id'>[],
+  ) => Promise<Split[]>;
+  removeSplit: (splitId: string) => Promise<void>;
+  settleSplits: (splitIds: string[], transactionId: string, settledAt: string) => Promise<void>;
+  reopenSplit: (splitId: string) => Promise<void>;
 };
 
 const FintrackContext = createContext<Store | null>(null);
@@ -64,6 +78,8 @@ const EMPTY: Snapshot = {
   people: [],
   accounts: [],
   transactions: [],
+  contacts: [],
+  splits: [],
   investments: [],
   goals: [],
   loans: [],
@@ -174,6 +190,15 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
           accounts: previous
             ? applyTransaction(prev.snapshot.accounts, previous, -1)
             : prev.snapshot.accounts,
+          // Cascata que o backend também faz: some a divisão que nasceu do
+          // lançamento e reabre a dívida que ele tinha acertado.
+          splits: prev.snapshot.splits
+            .filter((split) => split.transactionId !== transactionId)
+            .map((split) =>
+              split.settlementTransactionId === transactionId
+                ? { ...split, settlementTransactionId: undefined, settledAt: undefined }
+                : split,
+            ),
         },
       };
     });
@@ -337,6 +362,117 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
     [patchSnapshot],
   );
 
+  const addContact = useCallback(
+    async (input: Omit<Contact, 'id'>) => {
+      const contact = await api.createContact(input);
+      patchSnapshot((snapshot) => ({ ...snapshot, contacts: [...snapshot.contacts, contact] }));
+      return contact;
+    },
+    [patchSnapshot],
+  );
+
+  const saveContact = useCallback(
+    async (contactId: string, input: Omit<Contact, 'id'>) => {
+      const contact = await api.updateContact(contactId, input);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        contacts: snapshot.contacts.map((item) => (item.id === contact.id ? contact : item)),
+      }));
+      return contact;
+    },
+    [patchSnapshot],
+  );
+
+  /** Excluir a pessoa leva junto as divisões dela (o backend faz o mesmo). */
+  const removeContact = useCallback(
+    async (contactId: string) => {
+      await api.deleteContact(contactId);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        contacts: snapshot.contacts.filter((item) => item.id !== contactId),
+        splits: snapshot.splits.filter((split) => split.contactId !== contactId),
+      }));
+    },
+    [patchSnapshot],
+  );
+
+  const addSplits = useCallback(
+    async (inputs: Omit<Split, 'id'>[]) => {
+      if (inputs.length === 0) return [];
+      const splits = await api.createSplits(inputs);
+      patchSnapshot((snapshot) => ({ ...snapshot, splits: [...snapshot.splits, ...splits] }));
+      return splits;
+    },
+    [patchSnapshot],
+  );
+
+  /**
+   * Regrava a divisão de um lançamento ao editá-lo: as pendentes são trocadas
+   * pelas novas e as já acertadas ficam como estão — desfazer um acerto é uma
+   * decisão à parte, na tela de Acertos.
+   */
+  const replaceTransactionSplits = useCallback(
+    async (transactionId: string, inputs: Omit<Split, 'id'>[]) => {
+      const previous = (stateRef.current.snapshot?.splits ?? []).filter(
+        (split) => split.transactionId === transactionId && !split.settledAt,
+      );
+      for (const split of previous) {
+        await api.deleteSplit(split.id);
+      }
+      const created = inputs.length > 0 ? await api.createSplits(inputs) : [];
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        splits: [
+          ...snapshot.splits.filter((split) => !previous.some((old) => old.id === split.id)),
+          ...created,
+        ],
+      }));
+      return created;
+    },
+    [patchSnapshot],
+  );
+
+  const removeSplit = useCallback(
+    async (splitId: string) => {
+      await api.deleteSplit(splitId);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        splits: snapshot.splits.filter((split) => split.id !== splitId),
+      }));
+    },
+    [patchSnapshot],
+  );
+
+  const settleSplits = useCallback(
+    async (splitIds: string[], transactionId: string, settledAt: string) => {
+      await api.settleSplits(splitIds, transactionId, settledAt);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        splits: snapshot.splits.map((split) =>
+          splitIds.includes(split.id)
+            ? { ...split, settlementTransactionId: transactionId, settledAt }
+            : split,
+        ),
+      }));
+    },
+    [patchSnapshot],
+  );
+
+  const reopenSplit = useCallback(
+    async (splitId: string) => {
+      await api.reopenSplit(splitId);
+      patchSnapshot((snapshot) => ({
+        ...snapshot,
+        splits: snapshot.splits.map((split) =>
+          split.id === splitId
+            ? { ...split, settlementTransactionId: undefined, settledAt: undefined }
+            : split,
+        ),
+      }));
+    },
+    [patchSnapshot],
+  );
+
   const value = useMemo<Store>(
     () => ({
       ...state,
@@ -359,7 +495,15 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       removeAccount,
       resendInvite,
       cancelInvite,
-    }),
+      addContact,
+      saveContact,
+      removeContact,
+      addSplits,
+      replaceTransactionSplits,
+      removeSplit,
+      settleSplits,
+      reopenSplit,
+}),
     [
       state,
       signIn,
@@ -381,7 +525,15 @@ export function FintrackProvider({ children }: { children: ReactNode }) {
       removeAccount,
       resendInvite,
       cancelInvite,
-    ],
+      addContact,
+      saveContact,
+      removeContact,
+      addSplits,
+      replaceTransactionSplits,
+      removeSplit,
+      settleSplits,
+      reopenSplit,
+],
   );
 
   return <FintrackContext.Provider value={value}>{children}</FintrackContext.Provider>;
@@ -406,4 +558,24 @@ export function useCurrentPerson() {
 
 export function usePreferences(): Preferences {
   return useSnapshot().preferences;
+}
+
+/** Pessoas que a pessoa logada cadastrou para dividir contas. */
+export function useContacts(): Contact[] {
+  const { contacts } = useSnapshot();
+  const person = useCurrentPerson();
+  return useMemo(
+    () => contacts.filter((contact) => contact.ownerId === person?.id),
+    [contacts, person?.id],
+  );
+}
+
+/** Divisões que envolvem a pessoa logada, já do ponto de vista dela. */
+export function useLedger(): LedgerEntry[] {
+  const { splits, contacts, people } = useSnapshot();
+  const person = useCurrentPerson();
+  return useMemo(
+    () => splitLedger(splits, contacts, people, person?.id ?? null),
+    [splits, contacts, people, person?.id],
+  );
 }

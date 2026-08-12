@@ -38,6 +38,48 @@ export type Transaction = {
   notes?: string;
 };
 
+/**
+ * Pessoa com quem se divide contas. Não precisa usar o FinTrack — é só um nome
+ * que a pessoa logada cadastra. Quando `personId` está preenchido, a pessoa
+ * também tem conta no app e as divisões aparecem dos dois lados.
+ */
+export type Contact = {
+  id: string;
+  name: string;
+  initial: string;
+  /** Quem cadastrou o contato */
+  ownerId: OwnerId;
+  /** Membro do FinTrack por trás do nome, quando existe */
+  personId?: OwnerId;
+};
+
+/** `a-receber`: a outra pessoa me deve. `a-pagar`: eu devo a ela. */
+export type SplitDirection = 'a-receber' | 'a-pagar';
+
+/**
+ * Uma dívida entre quem registrou (`ownerId`) e um contato (`contactId`).
+ *
+ * Nasce de um lançamento dividido (`transactionId`) ou avulsa, e é quitada
+ * apontando para o lançamento do acerto (`settlementTransactionId`).
+ */
+export type Split = {
+  id: string;
+  ownerId: OwnerId;
+  contactId: string;
+  direction: SplitDirection;
+  description: string;
+  /** Sempre positivo; quem deve a quem vem de `direction`. */
+  amount: number;
+  /** ISO date (YYYY-MM-DD) */
+  date: string;
+  /** Lançamento que originou a divisão — a conta que foi paga */
+  transactionId?: string;
+  /** Lançamento do acerto: o ganho ao receber, o gasto ao pagar */
+  settlementTransactionId?: string;
+  /** ISO date do acerto; ausente enquanto a divisão está em aberto */
+  settledAt?: string;
+};
+
 export type AccountKind = 'corrente' | 'poupanca' | 'cartao' | 'investimento';
 
 export type Account = {

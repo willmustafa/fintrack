@@ -15,6 +15,7 @@ import {
   inputToNumber,
   monthNameOf,
   parseMonthLong,
+  recentDateOptions,
 } from '@/lib/format';
 
 describe('formatNumber', () => {
@@ -247,5 +248,35 @@ describe('formatMonthSpan', () => {
   it('zero ou negativo é quitado', () => {
     expect(formatMonthSpan(0)).toBe('quitado');
     expect(formatMonthSpan(-3)).toBe('quitado');
+  });
+});
+
+describe('recentDateOptions', () => {
+  it('começa em Hoje e Ontem, com a data completa como apoio', () => {
+    const [hoje, ontem] = recentDateOptions('2024-05-24');
+    expect(hoje).toEqual({ value: '2024-05-24', label: 'Hoje', hint: '24/05/2024' });
+    expect(ontem).toEqual({ value: '2024-05-23', label: 'Ontem', hint: '23/05/2024' });
+  });
+
+  it('do terceiro dia em diante mostra só a data', () => {
+    expect(recentDateOptions('2024-05-24')[2]).toEqual({
+      value: '2024-05-22',
+      label: '22/05/2024',
+      hint: undefined,
+    });
+  });
+
+  it('devolve duas semanas por padrão e volta o mês quando precisa', () => {
+    const opcoes = recentDateOptions('2024-05-02');
+    expect(opcoes).toHaveLength(14);
+    expect(opcoes.at(-1)?.value).toBe('2024-04-19');
+  });
+
+  it('aceita outra quantidade de dias', () => {
+    expect(recentDateOptions('2024-05-24', 3).map((o) => o.value)).toEqual([
+      '2024-05-24',
+      '2024-05-23',
+      '2024-05-22',
+    ]);
   });
 });

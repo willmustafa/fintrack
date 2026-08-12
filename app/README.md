@@ -65,6 +65,8 @@ src/
     (tabs)/                 Início, Transações, Cartões, Investimentos, Mais
     transacao/[id]          modal de lançamento — `nova` cria, um id edita/exclui
     conta/[id]              modal de conta/cartão — `nova` cria, um id edita/exclui
+    acertos/                divisão de contas: lista, detalhe por pessoa,
+                            cadastro de nomes, divisão avulsa e registro do acerto
     metas/                  lista + comparação de orçamentos
     financiamento/          visão geral + amortização
     perfil/                 configurações, editar perfil, notificações,
@@ -85,12 +87,33 @@ src/
 | Auth            | V2 — hero roxo + bottom-sheet; cadastro em tela própria                   |
 | Início          | Saldo consolidado, números do mês no topo, sobra por semana, orçamento 50/30/20, metas quase concluídas e prazo do financiamento |
 | Transações      | V1 — busca, filtros e agrupamento por dia, com o resumo entradas/saídas da V2 |
-| Nova transação  | V1 — tipo em abas, valor, conta, categoria, data, pago por, recorrência; a mesma tela edita e exclui um lançamento existente |
+| Nova transação  | V1 — tipo em abas, valor, conta, categoria, data, pago por, recorrência e divisão da conta; a mesma tela edita e exclui um lançamento existente |
 | Investimentos   | V1 (blocos por classe) + gráfico de evolução da V2                        |
 | Metas           | V1 (cards com progresso) + tela de comparação de orçamentos               |
 | Financiamento   | Visão geral e Amortização, com rateio entre Ana e Marcelo                 |
 | Perfil          | Configurações + modal de convite, com as subtelas de edição, notificações, segurança e compartilhamento |
 | Cartões e contas | **Não existe no board** — lista contas e cartões com criar/editar/excluir, seletor de banco brasileiro e "conta conjunta"; o cartão junta fatura, limite e datas num bloco só (os lançamentos ficam no extrato) |
+| Acertos         | **Não existe no board** — divisão de contas no estilo Splitwise: quem te deve, a quem você deve, em quais lançamentos, e o acerto ligado à transação do pagamento |
+
+## Acertos (divisão de contas)
+
+Ao lançar um gasto dá para ligar **Dividir com alguém**, marcar as pessoas e
+ajustar a parte de cada uma (o padrão racha em partes iguais entre elas e você).
+Cada parte vira uma dívida ligada àquele lançamento, e a soma delas aparece em
+**Mais › Acertos**.
+
+- **Pessoas** são só nomes que você cadastra (`Contact`) — não precisam usar o
+  app. Quem usa pode ser vinculado a um membro (`personId`), e aí a mesma
+  divisão aparece nos dois apps: do outro lado ela é o oposto ("você deve" vira
+  "te deve"). É o que `splitLedger` faz em `src/lib/finance.ts`, sempre do ponto
+  de vista de quem está logado.
+- **Nova divisão** registra uma dívida avulsa, nos dois sentidos ("me devem" e
+  "eu devo"), para o que não saiu de um lançamento seu.
+- **Registrar acerto** fecha as divisões escolhidas apontando para o lançamento
+  do pagamento: cria um na hora (ganho ao receber, gasto ao pagar, categoria
+  `Acerto`) ou aponta um que já está no extrato. Selecionar os dois lados acerta
+  pelo líquido. Dá para desfazer o acerto, e excluir o lançamento reabre a
+  dívida.
 
 ## Conectando ao backend Go
 
@@ -108,10 +131,17 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | ------ | ----------------------- | ----------------------------------------------------- |
 | POST   | `/auth/login`           | `Session`                                             |
 | POST   | `/auth/signup`          | `Session`                                             |
-| GET    | `/snapshot`             | `Snapshot` (contas, transações, investimentos, metas, financiamentos, convites, preferências) |
+| GET    | `/snapshot`             | `Snapshot` (contas, transações, pessoas e divisões, investimentos, metas, financiamentos, convites, preferências) |
 | POST   | `/transactions`         | `Transaction`                                         |
 | PUT    | `/transactions/:id`     | `Transaction`                                         |
 | DELETE | `/transactions/:id`     | `204`                                                 |
+| POST   | `/contacts`             | `Contact`                                             |
+| PUT    | `/contacts/:id`         | `Contact`                                             |
+| DELETE | `/contacts/:id`         | `204`                                                 |
+| POST   | `/splits`               | `Split[]` — corpo `{ "splits": [...] }`               |
+| DELETE | `/splits/:id`           | `204`                                                 |
+| POST   | `/splits/settle`        | `204` — corpo `{ "splitIds", "transactionId", "settledAt" }` |
+| DELETE | `/splits/:id/settlement` | `204` (desfaz o acerto)                              |
 | POST   | `/goals/:id/quote`      | `Goal`                                                |
 | PATCH  | `/me`                   | `Person`                                              |
 | POST   | `/me/password`          | `204`                                                 |
@@ -125,6 +155,11 @@ espera estes endpoints devolvendo os tipos de `src/types/index.ts`:
 | POST   | `/invites`              | `Invite`                                              |
 | POST   | `/invites/:id/resend`   | `Invite`                                              |
 | DELETE | `/invites/:id`          | `204`                                                 |
+
+Duas cascatas que o app já reflete no snapshot local e o Go precisa fazer no banco:
+excluir uma pessoa (`DELETE /contacts/:id`) apaga as divisões dela, e excluir um
+lançamento (`DELETE /transactions/:id`) apaga as divisões que nasceram dele e
+reabre as que ele tinha acertado.
 
 Valores monetários trafegam como número em reais (ex.: `156.30`) e datas como `YYYY-MM-DD`.
 Respostas de erro devolvem `{ "message": "..." }` em pt-BR — a mensagem vai direto para a tela.

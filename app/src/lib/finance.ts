@@ -6,7 +6,20 @@
 
 import { parseMonthLong } from '@/lib/format';
 import { colors } from '@/theme/tokens';
-import type { Account, BudgetSlice, Goal, Investment, Loan, Transaction } from '@/types';
+import type {
+  Account,
+  BudgetSlice,
+  Contact,
+  Goal,
+  Investment,
+  Loan,
+  OwnerId,
+  Person,
+  Split,
+  SplitDirection,
+  Transaction,
+  TransactionKind,
+} from '@/types';
 
 export const REFERENCE_MONTH = '2024-05';
 
@@ -174,6 +187,159 @@ export function monthsToPayoff(loan: Loan, fromMonth = REFERENCE_MONTH): number 
 /** Fatia já quitada do financiamento, de 0 a 1. */
 export const loanPaidRatio = (loan: Loan): number =>
   loan.total > 0 ? (loan.total - loan.balance) / loan.total : 0;
+
+/* ------------------------------------------------------------------ *
+ * Divisão de contas (Acertos)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Uma divisão vista pela pessoa logada.
+ *
+ * `direction` já vem do ponto de vista de quem está no app: a divisão que o
+ * Marcelo registrou como "a Ana me deve" chega aqui, no app da Ana, como
+ * `a-pagar` e `mirrored: true`.
+ */
+export type LedgerEntry = {
+  split: Split;
+  direction: SplitDirection;
+  /** Chave da contraparte — id do contato, ou `pessoa-<id>` sem contato cadastrado */
+  counterpartId: string;
+  counterpartName: string;
+  /** Veio do app de quem compartilha contas comigo */
+  mirrored: boolean;
+  settled: boolean;
+};
+
+export type CounterpartBalance = {
+  id: string;
+  name: string;
+  /** Saldo em aberto: positivo te devem, negativo você deve */
+  net: number;
+  toReceive: number;
+  toPay: number;
+  open: LedgerEntry[];
+  settled: LedgerEntry[];
+};
+
+const invert = (direction: SplitDirection): SplitDirection =>
+  direction === 'a-receber' ? 'a-pagar' : 'a-receber';
+
+/** O acerto de quem tem a receber entra como ganho; de quem deve, como gasto. */
+export const settlementKind = (direction: SplitDirection): TransactionKind =>
+  direction === 'a-receber' ? 'ganho' : 'gasto';
+
+/** Categoria dos lançamentos criados ao acertar uma divisão. */
+export const SETTLEMENT_CATEGORY = 'Acerto';
+
+/**
+ * Divisões que envolvem a pessoa logada, normalizadas para o ponto de vista
+ * dela: as que ela registrou e as que alguém registrou apontando para ela.
+ */
+export function splitLedger(
+  splits: Split[],
+  contacts: Contact[],
+  people: Person[],
+  personId: OwnerId | null,
+): LedgerEntry[] {
+  if (!personId) return [];
+
+  const contactById = new Map(contacts.map((contact) => [contact.id, contact]));
+  /** Contato que a pessoa logada cadastrou para um membro do app. */
+  const myContactFor = (memberId: OwnerId) =>
+    contacts.find((contact) => contact.ownerId === personId && contact.personId === memberId);
+
+  const entries: LedgerEntry[] = [];
+  for (const split of splits) {
+    const settled = Boolean(split.settledAt || split.settlementTransactionId);
+    const contact = contactById.get(split.contactId);
+
+    if (split.ownerId === personId) {
+      entries.push({
+        split,
+        direction: split.direction,
+        counterpartId: split.contactId,
+        counterpartName: contact?.name ?? 'Sem nome',
+        mirrored: false,
+        settled,
+      });
+      continue;
+    }
+
+    // Registrada por quem compartilha contas comigo, apontando para mim:
+    // a dívida é a mesma, só que do outro lado.
+    if (contact?.personId === personId) {
+      const mine = myContactFor(split.ownerId);
+      entries.push({
+        split,
+        direction: invert(split.direction),
+        counterpartId: mine?.id ?? `pessoa-${split.ownerId}`,
+        counterpartName:
+          mine?.name ?? people.find((person) => person.id === split.ownerId)?.name ?? 'Sem nome',
+        mirrored: true,
+        settled,
+      });
+    }
+  }
+
+  return entries.sort((a, b) => b.split.date.localeCompare(a.split.date));
+}
+
+/** Só o que ainda não foi acertado. */
+export const openEntries = (entries: LedgerEntry[]): LedgerEntry[] =>
+  entries.filter((entry) => !entry.settled);
+
+/** Quanto tenho a receber, a pagar e o líquido — apenas divisões em aberto. */
+export function splitTotals(entries: LedgerEntry[]) {
+  const toReceive = openEntries(entries)
+    .filter((entry) => entry.direction === 'a-receber')
+    .reduce((total, entry) => total + entry.split.amount, 0);
+  const toPay = openEntries(entries)
+    .filter((entry) => entry.direction === 'a-pagar')
+    .reduce((total, entry) => total + entry.split.amount, 0);
+  return { toReceive, toPay, net: toReceive - toPay };
+}
+
+/** Agrupa por contraparte, do maior saldo em aberto para o menor. */
+export function ledgerBalances(entries: LedgerEntry[]): CounterpartBalance[] {
+  const groups = new Map<string, CounterpartBalance>();
+
+  for (const entry of entries) {
+    const group = groups.get(entry.counterpartId) ?? {
+      id: entry.counterpartId,
+      name: entry.counterpartName,
+      net: 0,
+      toReceive: 0,
+      toPay: 0,
+      open: [],
+      settled: [],
+    };
+    if (entry.settled) {
+      group.settled.push(entry);
+    } else {
+      group.open.push(entry);
+      if (entry.direction === 'a-receber') group.toReceive += entry.split.amount;
+      else group.toPay += entry.split.amount;
+      group.net = group.toReceive - group.toPay;
+    }
+    groups.set(entry.counterpartId, group);
+  }
+
+  return [...groups.values()].sort(
+    (a, b) => Math.abs(b.net) - Math.abs(a.net) || a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * Divide um valor em partes iguais sem perder centavos: a sobra do
+ * arredondamento vai para as primeiras partes (R$ 10 em 3 → 3,34 · 3,33 · 3,33).
+ */
+export function equalShares(amount: number, parts: number): number[] {
+  if (parts <= 0) return [];
+  const cents = Math.round(amount * 100);
+  const base = Math.floor(cents / parts);
+  const rest = cents - base * parts;
+  return Array.from({ length: parts }, (_, index) => (base + (index < rest ? 1 : 0)) / 100);
+}
 
 export function groupByDay(transactions: Transaction[]): [string, Transaction[]][] {
   const map = new Map<string, Transaction[]>();

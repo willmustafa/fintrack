@@ -10,6 +10,7 @@
 import * as seed from '@/data/seed';
 import type {
   Account,
+  Contact,
   Goal,
   Investment,
   Invite,
@@ -19,6 +20,7 @@ import type {
   Preferences,
   ProfileInput,
   Session,
+  Split,
   Transaction,
 } from '@/types';
 
@@ -64,6 +66,8 @@ export type Snapshot = {
   people: Person[];
   accounts: Account[];
   transactions: Transaction[];
+  contacts: Contact[];
+  splits: Split[];
   investments: Investment[];
   goals: Goal[];
   loans: Loan[];
@@ -106,6 +110,8 @@ export const api = {
         people: seed.people,
         accounts: seed.accounts,
         transactions: seed.transactions,
+        contacts: seed.contacts,
+        splits: seed.splits,
         investments: seed.investments,
         goals: seed.goals,
         loans: seed.loans,
@@ -242,6 +248,79 @@ export const api = {
       return;
     }
     await request<void>(`/transactions/${transactionId}`, { method: 'DELETE' });
+  },
+
+  async createContact(input: Omit<Contact, 'id'>): Promise<Contact> {
+    if (isMockMode) {
+      return latency({ ...input, id: `c${Date.now()}` }, 120);
+    }
+    return request<Contact>('/contacts', { method: 'POST', body: JSON.stringify(input) });
+  },
+
+  async updateContact(contactId: string, input: Omit<Contact, 'id'>): Promise<Contact> {
+    if (isMockMode) {
+      return latency({ ...input, id: contactId }, 120);
+    }
+    return request<Contact>(`/contacts/${contactId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  },
+
+  async deleteContact(contactId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>(`/contacts/${contactId}`, { method: 'DELETE' });
+  },
+
+  /** Cria as divisões de um lançamento de uma vez (uma por pessoa). */
+  async createSplits(inputs: Omit<Split, 'id'>[]): Promise<Split[]> {
+    if (isMockMode) {
+      const stamp = Date.now();
+      return latency(
+        inputs.map((input, index) => ({ ...input, id: `sp${stamp}${index}` })),
+        120,
+      );
+    }
+    return request<Split[]>('/splits', {
+      method: 'POST',
+      body: JSON.stringify({ splits: inputs }),
+    });
+  },
+
+  async deleteSplit(splitId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>(`/splits/${splitId}`, { method: 'DELETE' });
+  },
+
+  /** Marca divisões como acertadas apontando para o lançamento do pagamento. */
+  async settleSplits(
+    splitIds: string[],
+    transactionId: string,
+    settledAt: string,
+  ): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>('/splits/settle', {
+      method: 'POST',
+      body: JSON.stringify({ splitIds, transactionId, settledAt }),
+    });
+  },
+
+  /** Desfaz o acerto — a divisão volta para a lista de pendências. */
+  async reopenSplit(splitId: string): Promise<void> {
+    if (isMockMode) {
+      await latency(null, 120);
+      return;
+    }
+    await request<void>(`/splits/${splitId}/settlement`, { method: 'DELETE' });
   },
 
   async chooseGoalQuote(goalId: string, quoteId: string): Promise<Goal> {

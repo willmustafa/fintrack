@@ -34,6 +34,34 @@ export function Avatar({ ownerId, size = 24, style }: AvatarProps) {
   );
 }
 
+type ContactAvatarProps = {
+  /** Inicial já calculada (`Contact.initial`) */
+  initial: string;
+  size?: number;
+  /** Contato ligado a um membro do app ganha a cor da pessoa */
+  ownerId?: OwnerId;
+};
+
+/** Selo de quem divide contas — só um nome, não necessariamente do app. */
+export function ContactAvatar({ initial, size = 36, ownerId }: ContactAvatarProps) {
+  const linked = ownerId ? ownerColors[ownerId] : null;
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: linked ?? colors.accentSoft,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <Text weight="extrabold" size={size * 0.4} color={linked ? colors.white : colors.accent}>
+        {initial}
+      </Text>
+    </View>
+  );
+}
+
 type CategoryIconProps = {
   ownerId: OwnerId;
   size?: number;

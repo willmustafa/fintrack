@@ -2,6 +2,12 @@ import * as seed from '@/data/seed';
 import {
   REFERENCE_MONTH,
   applyTransaction,
+  equalShares,
+  ledgerBalances,
+  openEntries,
+  settlementKind,
+  splitLedger,
+  splitTotals,
   budgetSlices,
   budgetTargets,
   consolidatedBalance,
@@ -22,7 +28,16 @@ import {
   signOf,
   signedAmount,
 } from '@/lib/finance';
-import type { Account, Goal, Investment, Loan, Transaction } from '@/types';
+import type {
+  Account,
+  Contact,
+  Goal,
+  Investment,
+  Loan,
+  Person,
+  Split,
+  Transaction,
+} from '@/types';
 
 const tx = (over: Partial<Transaction> = {}): Transaction => ({
   id: 't',
@@ -501,5 +516,228 @@ describe('meses até quitar', () => {
   it('loanPaidRatio é a fatia já amortizada', () => {
     expect(loanPaidRatio(seed.loans[0])).toBeCloseTo(0.3058, 4);
     expect(loanPaidRatio(loan({ total: 0, balance: 0 }))).toBe(0);
+  });
+});
+
+describe('divisão de contas', () => {
+  const ana: Person = { id: 'ana', name: 'Ana Ribeiro', initial: 'A', email: 'ana@email.com' };
+  const marcelo: Person = {
+    id: 'marcelo',
+    name: 'Marcelo Souza',
+    initial: 'M',
+    email: 'marcelo@email.com',
+  };
+  const people = [ana, marcelo];
+
+  /** Contatos da Ana: um nome avulso e o Marcelo, que também usa o app. */
+  const joao: Contact = { id: 'c1', name: 'João Pedro', initial: 'J', ownerId: 'ana' };
+  const marceloContato: Contact = {
+    id: 'c3',
+    name: 'Marcelo',
+    initial: 'M',
+    ownerId: 'ana',
+    personId: 'marcelo',
+  };
+  /** Contato que o Marcelo cadastrou apontando para a conta da Ana. */
+  const anaContato: Contact = {
+    id: 'c4',
+    name: 'Ana',
+    initial: 'A',
+    ownerId: 'marcelo',
+    personId: 'ana',
+  };
+  const contacts = [joao, marceloContato, anaContato];
+
+  const split = (over: Partial<Split> = {}): Split => ({
+    id: 's1',
+    ownerId: 'ana',
+    contactId: 'c1',
+    direction: 'a-receber',
+    description: 'Mercado',
+    amount: 50,
+    date: '2024-05-24',
+    ...over,
+  });
+
+  describe('splitLedger', () => {
+    it('traz as divisões que a pessoa registrou com o nome do contato', () => {
+      const entradas = splitLedger([split()], contacts, people, 'ana');
+      expect(entradas).toHaveLength(1);
+      expect(entradas[0]).toMatchObject({
+        direction: 'a-receber',
+        counterpartId: 'c1',
+        counterpartName: 'João Pedro',
+        mirrored: false,
+        settled: false,
+      });
+    });
+
+    it('inverte o lado da divisão que o outro registrou apontando para mim', () => {
+      const doMarcelo = split({ id: 's2', ownerId: 'marcelo', contactId: 'c4', amount: 100 });
+      const entradas = splitLedger([doMarcelo], contacts, people, 'ana');
+      expect(entradas[0]).toMatchObject({
+        direction: 'a-pagar',
+        counterpartId: 'c3',
+        counterpartName: 'Marcelo',
+        mirrored: true,
+      });
+    });
+
+    it('sem contato cadastrado, a contraparte espelhada vira a pessoa do app', () => {
+      const doMarcelo = split({ id: 's2', ownerId: 'marcelo', contactId: 'c4' });
+      const entradas = splitLedger([doMarcelo], [anaContato], people, 'ana');
+      expect(entradas[0]).toMatchObject({
+        counterpartId: 'pessoa-marcelo',
+        counterpartName: 'Marcelo Souza',
+      });
+    });
+
+    it('ignora divisão entre terceiros', () => {
+      const deOutros = split({ id: 's3', ownerId: 'marcelo', contactId: 'c1' });
+      expect(splitLedger([deOutros], contacts, people, 'ana')).toEqual([]);
+    });
+
+    it('sem pessoa logada não devolve nada', () => {
+      expect(splitLedger([split()], contacts, people, null)).toEqual([]);
+    });
+
+    it('marca como acertada quem já tem data ou lançamento de acerto', () => {
+      const lista = [
+        split({ id: 'a', settledAt: '2024-05-20' }),
+        split({ id: 'b', settlementTransactionId: 't9' }),
+        split({ id: 'c' }),
+      ];
+      const entradas = splitLedger(lista, contacts, people, 'ana');
+      expect(entradas.map((entrada) => entrada.settled)).toEqual([true, true, false]);
+      expect(openEntries(entradas).map((entrada) => entrada.split.id)).toEqual(['c']);
+    });
+
+    it('contato apagado ainda aparece, sem nome', () => {
+      const entradas = splitLedger([split({ contactId: 'sumiu' })], contacts, people, 'ana');
+      expect(entradas[0].counterpartName).toBe('Sem nome');
+    });
+
+    it('ordena da divisão mais recente para a mais antiga', () => {
+      const lista = [
+        split({ id: 'velha', date: '2024-04-01' }),
+        split({ id: 'nova', date: '2024-05-24' }),
+      ];
+      expect(splitLedger(lista, contacts, people, 'ana').map((e) => e.split.id)).toEqual([
+        'nova',
+        'velha',
+      ]);
+    });
+  });
+
+  describe('splitTotals', () => {
+    const entradas = () =>
+      splitLedger(
+        [
+          split({ id: 'a', amount: 52.1 }),
+          split({ id: 'b', direction: 'a-pagar', amount: 45 }),
+          split({ id: 'c', amount: 100, settledAt: '2024-05-01' }),
+        ],
+        contacts,
+        people,
+        'ana',
+      );
+
+    it('soma o que está em aberto dos dois lados', () => {
+      const totais = splitTotals(entradas());
+      expect(totais).toMatchObject({ toReceive: 52.1, toPay: 45 });
+      expect(totais.net).toBeCloseTo(7.1, 2);
+    });
+
+    it('sem divisões, zera tudo', () => {
+      expect(splitTotals([])).toEqual({ toReceive: 0, toPay: 0, net: 0 });
+    });
+  });
+
+  describe('ledgerBalances', () => {
+    it('agrupa por contraparte e separa aberto de acertado', () => {
+      const entradas = splitLedger(
+        [
+          split({ id: 'a', amount: 52.1 }),
+          split({ id: 'b', direction: 'a-pagar', amount: 45 }),
+          split({ id: 'c', amount: 30, settledAt: '2024-05-01' }),
+        ],
+        contacts,
+        people,
+        'ana',
+      );
+      const [joaoBalance] = ledgerBalances(entradas);
+
+      expect(joaoBalance).toMatchObject({ id: 'c1', name: 'João Pedro', toReceive: 52.1, toPay: 45 });
+      expect(joaoBalance.net).toBeCloseTo(7.1, 2);
+      expect(joaoBalance.open).toHaveLength(2);
+      expect(joaoBalance.settled).toHaveLength(1);
+    });
+
+    it('ordena pelo maior saldo em aberto, em módulo', () => {
+      const entradas = splitLedger(
+        [
+          split({ id: 'a', contactId: 'c1', amount: 10 }),
+          split({ id: 'b', ownerId: 'marcelo', contactId: 'c4', amount: 100 }),
+        ],
+        contacts,
+        people,
+        'ana',
+      );
+      expect(ledgerBalances(entradas).map((balance) => balance.id)).toEqual(['c3', 'c1']);
+    });
+
+    it('quem só tem histórico fica com saldo zero', () => {
+      const entradas = splitLedger([split({ settledAt: '2024-05-01' })], contacts, people, 'ana');
+      expect(ledgerBalances(entradas)[0]).toMatchObject({ net: 0, open: [] });
+    });
+  });
+
+  describe('equalShares', () => {
+    it('divide sem sobrar centavo', () => {
+      expect(equalShares(10, 3)).toEqual([3.34, 3.33, 3.33]);
+      expect(equalShares(10, 3).reduce((total, part) => total + part, 0)).toBeCloseTo(10, 2);
+    });
+
+    it('divide em partes exatas quando dá', () => {
+      expect(equalShares(156.3, 3)).toEqual([52.1, 52.1, 52.1]);
+    });
+
+    it('uma parte só devolve o valor inteiro', () => {
+      expect(equalShares(99.99, 1)).toEqual([99.99]);
+    });
+
+    it('zero partes devolve lista vazia', () => {
+      expect(equalShares(100, 0)).toEqual([]);
+      expect(equalShares(100, -1)).toEqual([]);
+    });
+  });
+
+  describe('settlementKind', () => {
+    it('receber vira ganho e pagar vira gasto', () => {
+      expect(settlementKind('a-receber')).toBe('ganho');
+      expect(settlementKind('a-pagar')).toBe('gasto');
+    });
+  });
+
+  describe('seed', () => {
+    it('a Ana tem João e Camila devendo e uma dívida com o Marcelo', () => {
+      const entradas = splitLedger(seed.splits, seed.contacts, seed.people, 'ana');
+      expect(splitTotals(entradas)).toMatchObject({ toReceive: 104.2, toPay: 145 });
+      expect(ledgerBalances(entradas).map((balance) => balance.name)).toEqual([
+        'Marcelo Souza',
+        'Camila',
+        'João Pedro',
+      ]);
+    });
+
+    it('a mesma divisão aparece invertida no app do Marcelo', () => {
+      const entradas = splitLedger(seed.splits, seed.contacts, seed.people, 'marcelo');
+      expect(entradas).toHaveLength(1);
+      expect(entradas[0]).toMatchObject({
+        direction: 'a-receber',
+        counterpartName: 'Ana Ribeiro',
+        mirrored: false,
+      });
+    });
   });
 });

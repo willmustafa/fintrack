@@ -6,6 +6,7 @@
 import { ownerColors } from '@/theme/tokens';
 import type {
   Account,
+  Contact,
   Goal,
   Investment,
   Invite,
@@ -13,6 +14,7 @@ import type {
   MonthSummary,
   Person,
   Preferences,
+  Split,
   Transaction,
 } from '@/types';
 
@@ -220,6 +222,84 @@ export const transactions: Transaction[] = [
     accountId: 'corrente',
     date: '2024-05-03',
     ownerId: 'marcelo',
+  },
+  // Abril de propósito: é o acerto de uma divisão antiga (`sp3`) e não pode
+  // entrar nos números de maio fixados acima.
+  {
+    id: 't16',
+    kind: 'ganho',
+    description: 'Acerto · Camila',
+    amount: 64.2,
+    category: 'Acerto',
+    accountId: 'corrente',
+    date: '2024-04-28',
+    ownerId: 'ana',
+  },
+];
+
+/** Pessoas com quem se divide contas — nomes avulsos ou membros do app. */
+export const contacts: Contact[] = [
+  { id: 'c1', name: 'João Pedro', initial: 'J', ownerId: 'ana' },
+  { id: 'c2', name: 'Camila', initial: 'C', ownerId: 'ana' },
+  { id: 'c3', name: 'Marcelo Souza', initial: 'M', ownerId: 'ana', personId: 'marcelo' },
+  { id: 'c4', name: 'Ana Ribeiro', initial: 'A', ownerId: 'marcelo', personId: 'ana' },
+];
+
+/**
+ * Divisões da Ana: o mercado rachado com João e Camila, um Uber que ela deve
+ * ao João e um rodízio já acertado. `sp5` é do Marcelo e aparece no app dela
+ * pelo outro lado, porque o contato `c4` aponta para a conta da Ana.
+ */
+export const splits: Split[] = [
+  {
+    id: 'sp1',
+    ownerId: 'ana',
+    contactId: 'c1',
+    direction: 'a-receber',
+    description: 'Mercado',
+    amount: 52.1,
+    date: '2024-05-24',
+    transactionId: 't2',
+  },
+  {
+    id: 'sp2',
+    ownerId: 'ana',
+    contactId: 'c2',
+    direction: 'a-receber',
+    description: 'Mercado',
+    amount: 52.1,
+    date: '2024-05-24',
+    transactionId: 't2',
+  },
+  {
+    id: 'sp3',
+    ownerId: 'ana',
+    contactId: 'c2',
+    direction: 'a-receber',
+    description: 'Rodízio de aniversário',
+    amount: 64.2,
+    date: '2024-04-20',
+    settlementTransactionId: 't16',
+    settledAt: '2024-04-28',
+  },
+  {
+    id: 'sp4',
+    ownerId: 'ana',
+    contactId: 'c1',
+    direction: 'a-pagar',
+    description: 'Uber do aeroporto',
+    amount: 45,
+    date: '2024-05-18',
+  },
+  {
+    id: 'sp5',
+    ownerId: 'marcelo',
+    contactId: 'c4',
+    direction: 'a-receber',
+    description: 'Padaria do mês',
+    amount: 100,
+    date: '2024-05-06',
+    transactionId: 't13',
   },
 ];
 

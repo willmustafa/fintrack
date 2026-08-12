@@ -13,14 +13,28 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar } from '@/components/avatar';
+import { Avatar, ContactAvatar } from '@/components/avatar';
 import { Picker, type PickerOption } from '@/components/picker';
 import { Text } from '@/components/text';
 import { Button, Notice, Segmented } from '@/components/ui';
-import { centsToInput, formatDate, formatNumber, inputToNumber } from '@/lib/format';
-import { useCurrentPerson, useFintrack, useSnapshot } from '@/store/fintrack-store';
+import { equalShares } from '@/lib/finance';
+import {
+  centsToInput,
+  formatCurrency,
+  formatDate,
+  formatNumber,
+  inputToNumber,
+  recentDateOptions,
+} from '@/lib/format';
+import { initialOf } from '@/lib/validation';
+import {
+  useContacts,
+  useCurrentPerson,
+  useFintrack,
+  useSnapshot,
+} from '@/store/fintrack-store';
 import { colors, fonts, radius, spacing } from '@/theme/tokens';
-import type { OwnerId, TransactionKind } from '@/types';
+import type { OwnerId, Split, TransactionKind } from '@/types';
 
 const TODAY = '2024-05-24';
 
@@ -32,8 +46,18 @@ const KINDS: { value: TransactionKind; label: string }[] = [
 ];
 
 const CATEGORIES_BY_KIND: Record<TransactionKind, string[]> = {
-  gasto: ['Essenciais', 'Moradia', 'Transporte', 'Saúde', 'Assinatura', 'Lazer', 'Compras', 'Outros'],
-  ganho: ['Receita', 'Reembolso', 'Outros'],
+  gasto: [
+    'Essenciais',
+    'Moradia',
+    'Transporte',
+    'Saúde',
+    'Assinatura',
+    'Lazer',
+    'Compras',
+    'Acerto',
+    'Outros',
+  ],
+  ganho: ['Receita', 'Reembolso', 'Acerto', 'Outros'],
   transferencia: ['Transferência'],
   aporte: ['Investimentos'],
 };
@@ -43,16 +67,6 @@ const OWNERS: PickerOption<OwnerId>[] = [
   { value: 'marcelo', label: 'Marcelo' },
   { value: 'casal', label: 'Casal (compartilhado)' },
 ];
-
-/** Últimos dias como opções de data — evita depender de um date picker nativo. */
-function recentDates(reference: string): PickerOption<string>[] {
-  const base = Date.parse(`${reference}T12:00:00`);
-  return Array.from({ length: 14 }, (_, index) => {
-    const iso = new Date(base - index * 86400000).toISOString().slice(0, 10);
-    const label = index === 0 ? 'Hoje' : index === 1 ? 'Ontem' : formatDate(iso);
-    return { value: iso, label, hint: index <= 1 ? formatDate(iso) : undefined };
-  });
-}
 
 /**
  * Nova transação · V1: cabeçalho com Salvar, tipo em abas e campos em lista.
@@ -64,11 +78,28 @@ export default function TransacaoFormScreen() {
   const router = useRouter();
   const person = useCurrentPerson();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { accounts, transactions } = useSnapshot();
-  const { addTransaction, editTransaction, removeTransaction } = useFintrack();
+  const { accounts, transactions, splits } = useSnapshot();
+  const contacts = useContacts();
+  const {
+    addTransaction,
+    editTransaction,
+    removeTransaction,
+    addContact,
+    addSplits,
+    replaceTransactionSplits,
+  } = useFintrack();
 
   const editing = transactions.find((transaction) => transaction.id === id);
   const isNew = !editing;
+
+  /** Divisões que este lançamento já gerou, separadas pelo que ainda dá para mexer. */
+  const mySplits = editing
+    ? splits.filter(
+        (split) => split.transactionId === editing.id && split.ownerId === person?.id,
+      )
+    : [];
+  const openSplits = mySplits.filter((split) => !split.settledAt);
+  const settledSplits = mySplits.filter((split) => split.settledAt);
 
   const [kind, setKind] = useState<TransactionKind>(editing?.kind ?? 'gasto');
   const [amount, setAmount] = useState(editing ? formatNumber(editing.amount, 2) : '0,00');
@@ -89,6 +120,15 @@ export default function TransacaoFormScreen() {
     'conta' | 'destino' | 'categoria' | 'data' | 'pessoa' | null
   >(null);
 
+  // Divisão: quem entrou no rateio e quanto cada um deve.
+  const [splitting, setSplitting] = useState(openSplits.length > 0);
+  const [shared, setShared] = useState<string[]>(openSplits.map((split) => split.contactId));
+  const [shares, setShares] = useState<Record<string, string>>(() =>
+    Object.fromEntries(openSplits.map((split) => [split.contactId, formatNumber(split.amount, 2)])),
+  );
+  const [newContact, setNewContact] = useState('');
+  const [addingContact, setAddingContact] = useState(false);
+
   const accountOptions = useMemo<PickerOption<string>[]>(
     () =>
       accounts.map((account) => ({
@@ -105,8 +145,8 @@ export default function TransacaoFormScreen() {
   );
 
   /** A data original pode ser mais antiga que a janela de dias recentes. */
-  const dateOptions = useMemo(() => {
-    const recent = recentDates(TODAY);
+  const dateOptions = useMemo<PickerOption<string>[]>(() => {
+    const recent = recentDateOptions(TODAY);
     if (!editing || recent.some((option) => option.value === editing.date)) return recent;
     return [{ value: editing.date, label: formatDate(editing.date) }, ...recent];
   }, [editing]);
@@ -114,7 +154,61 @@ export default function TransacaoFormScreen() {
   const accountName = (accountKey: string) =>
     accounts.find((a) => a.id === accountKey)?.name ?? accountKey;
   const value = inputToNumber(amount);
-  const canSave = value > 0 && !saving;
+
+  /** Só faz sentido rachar uma conta que você pagou. */
+  const canSplit = kind === 'gasto';
+  const sharedTotal = shared.reduce((total, id) => total + inputToNumber(shares[id] ?? '0'), 0);
+  const myPart = value - sharedTotal;
+  const splitInvalid = splitting && canSplit && (shared.length === 0 || myPart < 0);
+
+  const canSave = value > 0 && !saving && !splitInvalid;
+
+  /** Rateio igual entre você e quem foi marcado; a sobra de centavos fica com você. */
+  const splitEqually = (people: string[], total: number) => {
+    const parts = equalShares(total, people.length + 1);
+    return Object.fromEntries(people.map((id, index) => [id, formatNumber(parts[index + 1], 2)]));
+  };
+
+  const onChangeAmount = (text: string) => {
+    const next = centsToInput(text);
+    setAmount(next);
+    if (splitting) setShares(splitEqually(shared, inputToNumber(next)));
+  };
+
+  const toggleShared = (contactId: string) => {
+    const next = shared.includes(contactId)
+      ? shared.filter((item) => item !== contactId)
+      : [...shared, contactId];
+    setShared(next);
+    setShares(splitEqually(next, value));
+  };
+
+  const onToggleSplitting = (next: boolean) => {
+    setSplitting(next);
+    if (next) setShares(splitEqually(shared, value));
+  };
+
+  const onAddContact = async () => {
+    const trimmed = newContact.trim();
+    if (!trimmed || addingContact) return;
+    setAddingContact(true);
+    setError(null);
+    try {
+      const contact = await addContact({
+        name: trimmed,
+        initial: initialOf(trimmed),
+        ownerId: person?.id ?? 'ana',
+      });
+      const next = [...shared, contact.id];
+      setShared(next);
+      setShares(splitEqually(next, value));
+      setNewContact('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Não foi possível salvar a pessoa.');
+    } finally {
+      setAddingContact(false);
+    }
+  };
 
   const onChangeKind = (next: TransactionKind) => {
     setKind(next);
@@ -136,11 +230,27 @@ export default function TransacaoFormScreen() {
       description: description.trim() || category,
       recurring,
     };
+    /** Cada pessoa marcada vira uma dívida ligada a este lançamento. */
+    const splitsOf = (transactionId: string): Omit<Split, 'id'>[] =>
+      splitting && canSplit
+        ? shared.map((contactId) => ({
+            ownerId: person?.id ?? 'ana',
+            contactId,
+            direction: 'a-receber' as const,
+            description: input.description,
+            amount: inputToNumber(shares[contactId] ?? '0'),
+            date,
+            transactionId,
+          }))
+        : [];
+
     try {
       if (editing) {
         await editTransaction(editing.id, input);
+        await replaceTransactionSplits(editing.id, splitsOf(editing.id));
       } else {
-        await addTransaction(input);
+        const created = await addTransaction(input);
+        await addSplits(splitsOf(created.id));
       }
       router.back();
     } catch (caught) {
@@ -228,7 +338,7 @@ export default function TransacaoFormScreen() {
               </Text>
               <TextInput
                 value={amount}
-                onChangeText={(text) => setAmount(centsToInput(text))}
+                onChangeText={onChangeAmount}
                 keyboardType="number-pad"
                 selectTextOnFocus
                 style={{
@@ -304,6 +414,7 @@ export default function TransacaoFormScreen() {
                 Recorrência
               </Text>
               <Switch
+                accessibilityLabel="Recorrência"
                 value={recurring}
                 onValueChange={setRecurring}
                 trackColor={{ true: colors.accent, false: colors.track }}
@@ -311,6 +422,173 @@ export default function TransacaoFormScreen() {
               />
             </View>
           </View>
+
+          {canSplit ? (
+            <View style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: 10,
+                  gap: spacing.md,
+                }}>
+                <View style={{ flex: 1 }}>
+                  <Text size="small" color={colors.textSecondary}>
+                    Dividir com alguém
+                  </Text>
+                  <Text size="tiny" color={colors.textMuted} style={{ marginTop: 2 }}>
+                    Você paga agora e a parte de cada um fica em Acertos
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Dividir com alguém"
+                  value={splitting}
+                  onValueChange={onToggleSplitting}
+                  trackColor={{ true: colors.accent, false: colors.track }}
+                  thumbColor={colors.white}
+                />
+              </View>
+
+              {splitting ? (
+                <View style={{ borderTopWidth: 1, borderTopColor: colors.divider }}>
+                  {contacts.map((contact) => {
+                    const active = shared.includes(contact.id);
+                    return (
+                      <View
+                        key={contact.id}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: spacing.md,
+                          paddingHorizontal: spacing.lg,
+                          paddingVertical: 10,
+                          borderBottomWidth: 1,
+                          borderBottomColor: colors.divider,
+                        }}>
+                        <Pressable
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: active }}
+                          accessibilityLabel={contact.name}
+                          onPress={() => toggleShared(contact.id)}
+                          style={({ pressed }) => ({
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: spacing.sm,
+                            flex: 1,
+                            opacity: pressed ? 0.6 : 1,
+                          })}>
+                          <ContactAvatar
+                            initial={contact.initial}
+                            size={28}
+                            ownerId={contact.personId}
+                          />
+                          <Text
+                            size="small"
+                            weight={active ? 'bold' : 'medium'}
+                            color={active ? colors.text : colors.textSecondary}
+                            numberOfLines={1}
+                            style={{ flex: 1 }}>
+                            {contact.name}
+                          </Text>
+                        </Pressable>
+
+                        {active ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Text size="small" color={colors.textSecondary}>
+                              R$
+                            </Text>
+                            <TextInput
+                              accessibilityLabel={`Parte de ${contact.name}`}
+                              value={shares[contact.id] ?? '0,00'}
+                              onChangeText={(text) =>
+                                setShares((current) => ({
+                                  ...current,
+                                  [contact.id]: centsToInput(text),
+                                }))
+                              }
+                              keyboardType="number-pad"
+                              selectTextOnFocus
+                              style={{
+                                fontFamily: fonts.semibold,
+                                fontSize: 15,
+                                color: colors.text,
+                                textAlign: 'right',
+                                minWidth: 70,
+                                padding: 0,
+                              }}
+                            />
+                          </View>
+                        ) : (
+                          <Ionicons name="add-circle-outline" size={20} color={colors.textDisabled} />
+                        )}
+                      </View>
+                    );
+                  })}
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: spacing.sm,
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: 10,
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.divider,
+                    }}>
+                    <Ionicons name="person-add-outline" size={18} color={colors.textDisabled} />
+                    <TextInput
+                      value={newContact}
+                      onChangeText={setNewContact}
+                      placeholder="Adicionar pessoa"
+                      placeholderTextColor={colors.textMuted}
+                      onSubmitEditing={() => void onAddContact()}
+                      style={{
+                        flex: 1,
+                        fontFamily: fonts.medium,
+                        fontSize: 15,
+                        color: colors.text,
+                        padding: 0,
+                      }}
+                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Adicionar pessoa"
+                      hitSlop={10}
+                      disabled={newContact.trim().length === 0 || addingContact}
+                      onPress={() => void onAddContact()}>
+                      <Text
+                        weight="bold"
+                        size="small"
+                        color={newContact.trim() ? colors.accent : colors.textDisabled}>
+                        Adicionar
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={{ paddingHorizontal: spacing.lg, paddingVertical: 12, gap: 4 }}>
+                    <Text size="caption" color={myPart < 0 ? colors.expense : colors.textSecondary}>
+                      {shared.length === 0
+                        ? 'Marque quem entrou na conta.'
+                        : myPart < 0
+                          ? 'As partes somam mais que o valor do lançamento.'
+                          : `Sua parte: ${formatCurrency(myPart)} · a receber: ${formatCurrency(
+                              sharedTotal,
+                            )}`}
+                    </Text>
+                    {settledSplits.length > 0 ? (
+                      <Text size="tiny" color={colors.textMuted}>
+                        {settledSplits.length === 1
+                          ? '1 divisão já acertada continua no histórico.'
+                          : `${settledSplits.length} divisões já acertadas continuam no histórico.`}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
           {editing ? (
             <Button
